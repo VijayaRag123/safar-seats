@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Safar Seats</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: ticket-counter board. Slim top bar, a pitch beside the search card, then step views as white panels.
+   Seat maps sit left with a sticky fare summary right. Accent flips between bus orange and train blue. */
+:root{
+  --font-display:'Space Grotesk',system-ui,sans-serif;
+  --font-body:'Inter',system-ui,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+  --bg:#EBEEF3; --surface:#FFFFFF; --soft:#F4F6FA; --ink:#0E1A2B; --muted:#586376; --line:#D3DAE5;
+  --bus:#C2410C; --on-bus:#FFFFFF; --train:#1D4ED8; --on-train:#FFFFFF;
+  --ok:#15803D; --warn:#A16207; --bad:#B42318; --ladies:#BE185D; --booked:#E2E6EE;
+  --shadow:0 1px 2px rgba(14,26,43,.06),0 8px 24px rgba(14,26,43,.07);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0A111D; --surface:#121B2C; --soft:#0F1726; --ink:#E7ECF5; --muted:#98A4B8; --line:#25314A;
+    --bus:#FB923C; --on-bus:#1A0E04; --train:#7FA6FF; --on-train:#07122B;
+    --ok:#4ADE80; --warn:#FBBF24; --bad:#F87171; --ladies:#F472B6; --booked:#1B2538;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0A111D; --surface:#121B2C; --soft:#0F1726; --ink:#E7ECF5; --muted:#98A4B8; --line:#25314A;
+  --bus:#FB923C; --on-bus:#1A0E04; --train:#7FA6FF; --on-train:#07122B;
+  --ok:#4ADE80; --warn:#FBBF24; --bad:#F87171; --ladies:#F472B6; --booked:#1B2538;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  --accent:var(--train); --on-accent:var(--on-train);
+  background:var(--bg); color:var(--ink); font:400 15px/1.5 var(--font-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0; min-height:100%;
+}
+body[data-mode="train"]{--accent:var(--train); --on-accent:var(--on-train)}
+.wrap{max-width:1080px;margin:0 auto}
+h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance}
+h2{font-size:20px;letter-spacing:-.01em}
+h3{font-size:16px}
+p{margin:0}
+button{font-family:inherit}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.mono{font-family:var(--font-mono)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;background:none;border:0;color:var(--ink);font:700 20px var(--font-display);cursor:pointer;padding:0}
+.nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.navbtn{background:none;border:0;color:var(--muted);font:500 14px var(--font-body);padding:8px 10px;border-radius:8px;cursor:pointer}
+.navbtn:hover{color:var(--ink)}
+.navbtn.on{color:var(--accent);background:var(--surface)}
+.who{font-size:13px;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* buttons + fields */
+.btn{background:var(--accent);color:var(--on-accent);border:0;border-radius:8px;padding:10px 16px;font:600 14px var(--font-body);cursor:pointer}
+.btn:hover:not(:disabled){filter:brightness(1.06)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.small{padding:7px 12px;font-size:13px}
+.btn.wide{width:100%}
+.btn.danger{background:var(--bad);color:#fff}
+.linkbtn{background:none;border:0;color:var(--accent);font:500 14px var(--font-body);cursor:pointer;padding:4px 0}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label,.lbl{font:600 11px var(--font-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+input,select{padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;min-width:0;width:100%}
+input[aria-invalid="true"],select[aria-invalid="true"]{border-color:var(--bad)}
+.err{color:var(--bad);font-size:12.5px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+
+/* home */
+.intro{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,430px);gap:32px;align-items:start;padding-block:26px 20px}
+.eyebrow{font:600 12px var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+h1{font-size:clamp(30px,4.6vw,46px);line-height:1.08;letter-spacing:-.025em}
+.lead{margin-top:14px;color:var(--muted);max-width:52ch;font-size:16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.chip{background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:6px 12px;font:500 13px var(--font-body);cursor:pointer}
+.chip:hover,.chip[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+/* hero: photo band behind the greeting and search */
+.hero{position:relative;border-radius:18px;overflow:hidden;margin-top:6px;background:#1b2a3a url(hero.jpg) center 42%/cover no-repeat}
+.hero::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,14,28,.82) 0%,rgba(8,14,28,.55) 52%,rgba(8,14,28,.2) 100%)}
+.hero .intro{position:relative;padding:36px 28px}
+.hero .eyebrow{color:rgba(255,255,255,.88)}
+.hero h1{color:#fff;text-shadow:0 2px 18px rgba(0,0,0,.45)}
+.hero .sub{font:500 clamp(18px,2.6vw,24px)/1.25 var(--font-display);color:#fff;margin-top:10px;text-shadow:0 2px 14px rgba(0,0,0,.45)}
+.hero .lead{color:rgba(255,255,255,.86)}
+.hero .chip{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.38);color:#fff;backdrop-filter:blur(4px)}
+.hero .chip:hover{background:rgba(255,255,255,.26);border-color:#fff;color:#fff}
+@media (max-width:860px){.hero::before{background:rgba(8,14,28,.66)}.hero .intro{padding:24px 16px}}
+.searchcard{box-shadow:var(--shadow);display:flex;flex-direction:column;gap:14px}
+.tabs{display:flex;gap:4px;background:var(--soft);padding:4px;border-radius:10px}
+.tab{flex:1;background:none;border:0;border-radius:7px;padding:8px;font:600 14px var(--font-body);color:var(--muted);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--accent);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.route-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:end}
+.swap{height:42px;width:38px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;cursor:pointer;font-size:16px}
+.row2{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px;padding-block:18px}
+.fact{border-top:2px solid var(--accent);padding-top:10px}
+.fact h3{margin-bottom:4px}
+.fact p{color:var(--muted);font-size:14px}
+.note{color:var(--muted);font-size:12.5px;padding-block:6px 28px}
+
+/* results */
+.sumbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-block:14px}
+.filters select{width:auto}
+.list{display:flex;flex-direction:column;gap:10px;margin-bottom:30px}
+.trip{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.5fr) auto;gap:16px;align-items:center;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.trip h3{overflow-wrap:anywhere}
+.times{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.times b{font:600 16px var(--font-mono)}
+.times .dur{font-size:12.5px;color:var(--muted);padding:2px 8px;border:1px solid var(--line);border-radius:999px}
+.buy{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.price{font:700 20px var(--font-display)}
+.price small{font:400 12px var(--font-body);color:var(--muted);margin-left:4px}
+.badge{display:inline-block;font:600 12px var(--font-body);padding:2px 8px;border-radius:6px;background:var(--soft);border:1px solid var(--line);color:var(--muted)}
+.classes{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:8px}
+.cls{display:grid;gap:2px;text-align:left;border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--soft);color:var(--ink);cursor:pointer;min-width:118px}
+.cls:hover{border-color:var(--accent)}
+.cls .top1{display:flex;justify-content:space-between;gap:12px;font-weight:600}
+.cls .st{font-size:12.5px;font-weight:600}
+.ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+
+/* seat step */
+.crumb{padding-block:14px 8px}
+.seatgrid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start;margin-bottom:30px}
+.summary{position:sticky;top:12px;display:flex;flex-direction:column;gap:12px}
+.sel-list{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font:600 12px var(--font-mono);padding:3px 8px;border-radius:6px;background:var(--soft);border:1px solid var(--line)}
+.line{display:flex;justify-content:space-between;gap:12px;font-size:14px}
+.line.total{font:700 17px var(--font-display);border-top:1px solid var(--line);padding-top:10px}
+.hold{font-size:13px;background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.hold b{font-family:var(--font-mono)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--muted);margin-block:10px 14px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--line);background:var(--surface);display:inline-block}
+.sw.b{background:repeating-linear-gradient(135deg,var(--booked) 0 3px,transparent 3px 6px)}
+.sw.s{background:var(--accent);border-color:var(--accent)}
+.sw.l{border-color:var(--ladies)}
+.decks{display:flex;gap:20px;flex-wrap:wrap;overflow-x:auto;padding-bottom:4px}
+.deck{border:1.5px solid var(--line);border-radius:20px 20px 10px 10px;padding:10px 14px 14px;background:var(--soft);width:max-content;max-width:100%}
+.deck-head{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding-bottom:4px}
+.srow{display:flex;gap:6px;align-items:center;margin-top:6px}
+.pair{display:flex;gap:6px}
+.aisle{width:22px}
+.seat{width:36px;height:36px;border-radius:7px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:600 11px var(--font-mono);cursor:pointer;display:grid;place-items:center;padding:0}
+.seat.sleeper{height:62px;width:38px}
+.seat:hover:not(:disabled){border-color:var(--accent)}
+.seat.ladies{border-color:var(--ladies)}
+.seat.sel{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.seat:disabled{cursor:not-allowed;color:var(--muted);background:repeating-linear-gradient(135deg,var(--booked) 0 4px,transparent 4px 8px)}
+.seat.berth{width:48px;height:42px;align-content:center;line-height:1.15}
+.seat.berth small{font:500 9.5px var(--font-body);opacity:.8}
+.coaches{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.coachbtn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:6px 12px;font:600 13px var(--font-body);cursor:pointer}
+.coachbtn[aria-selected="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.autobar{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:6px}
+.autobar .field{width:150px}
+.bays{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:10px}
+.bay{border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--soft)}
+.bay-no{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+.bay-body{display:flex;gap:10px;margin-top:6px}
+.bay-main{display:flex;gap:6px}
+.col{display:flex;flex-direction:column;gap:4px}
+.bay-side{display:flex;flex-direction:column;gap:4px;border-left:1.5px dashed var(--line);padding-left:10px}
+.chairs{display:flex;flex-direction:column;gap:6px;overflow-x:auto}
+.chairs .srow{margin-top:0}
+
+/* berth map: tall sleeper-style berths, three tiers on both sides, side berths apart */
+.brow{display:flex;gap:8px;align-items:flex-start;margin-top:8px}
+.brow .bay-no{width:16px;text-align:center;margin-top:20px;font:600 10px var(--font-mono);color:var(--muted);letter-spacing:0;text-transform:none}
+.grp{display:flex;gap:3px}
+.grp.side{margin-left:6px;padding-left:10px;border-left:1.5px dashed var(--line)}
+.bcell{display:flex;flex-direction:column;align-items:center;gap:3px;width:34px}
+.bhead .pr{font-weight:600;letter-spacing:.04em}
+.pr{font:500 9.5px var(--font-mono);color:var(--muted);white-space:nowrap}
+.berthbtn{width:30px;height:54px;border-radius:6px;border:1.5px solid var(--ok);background:var(--surface);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:5px 0;cursor:pointer;font:600 10px var(--font-mono)}
+.berthbtn .pil{width:18px;height:5px;border-radius:2px;background:var(--ok);opacity:.35;display:block}
+.berthbtn:hover:not(:disabled){border-color:var(--accent)}
+.berthbtn.sel{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.berthbtn.sel .pil{background:var(--on-accent);opacity:.55}
+.berthbtn:disabled{cursor:not-allowed;border-color:var(--line);color:var(--muted);background-color:var(--booked);
+  background-image:linear-gradient(to top right,transparent calc(50% - 1px),var(--muted) 50%,transparent calc(50% + 1px)),linear-gradient(to bottom right,transparent calc(50% - 1px),var(--muted) 50%,transparent calc(50% + 1px));opacity:.75}
+.berthbtn:disabled .pil{opacity:0}
+.sw.a{border-color:var(--ok)}
+
+/* passengers + payment */
+.pax{border:1px solid var(--line);border-radius:10px;padding:12px 14px 14px;margin:0 0 12px}
+.pax legend{font:600 13px var(--font-body);padding:0 6px}
+.grid3{display:grid;grid-template-columns:2fr 1fr 1.2fr;gap:10px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.stack{display:flex;flex-direction:column;gap:14px}
+.opt{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 12px;cursor:pointer}
+.opt input{width:auto}
+.banner{border:1px solid var(--line);border-left-width:4px;border-radius:8px;padding:10px 12px;background:var(--surface);font-size:14px}
+.banner.ok{border-left-color:var(--ok)} .banner.warn{border-left-color:var(--warn)} .banner.bad{border-left-color:var(--bad)}
+
+/* ticket */
+.ticket{display:grid;grid-template-columns:minmax(0,1fr) 210px;padding:0;overflow:hidden;position:relative}
+.t-main{padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.stub{border-left:2px dashed var(--line);padding:20px;display:flex;flex-direction:column;gap:6px;background:var(--soft)}
+.pnr{font:600 20px var(--font-mono);letter-spacing:.04em;overflow-wrap:anywhere}
+.big-route{font:700 24px var(--font-display);letter-spacing:-.01em}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:6px 10px 6px 0;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font:600 11px var(--font-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-block:14px 30px}
+.status{font:600 12px var(--font-body);padding:3px 8px;border-radius:6px;border:1px solid currentColor}
+
+/* trips */
+.subtabs{display:flex;gap:6px;margin-block:14px}
+.tripcard{display:flex;flex-direction:column;gap:12px}
+.tripcard .head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:start}
+.cancelbox{border:1px solid var(--bad);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:10px}
+
+/* modal + toast */
+.overlay{position:fixed;inset:0;background:rgba(5,10,20,.6);display:grid;place-items:center;z-index:50;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.modal{background:var(--surface);border-radius:14px;padding:22px;width:min(400px,100%);display:flex;flex-direction:column;gap:12px;max-height:100%;overflow:auto}
+.demo{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+#toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:60;max-width:calc(100% - 32px);text-align:center}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media (max-width:860px){
+  .intro{grid-template-columns:minmax(0,1fr);gap:22px}
+  .seatgrid{display:block}
+  .summary{position:sticky;bottom:env(safe-area-inset-bottom,0px);top:auto;margin-top:14px;box-shadow:0 -6px 20px rgba(0,0,0,.12);z-index:5}
+  .trip{grid-template-columns:minmax(0,1fr)}
+  .buy{align-items:flex-start}
+  .grid3{grid-template-columns:minmax(0,1fr)}
+  .ticket{grid-template-columns:minmax(0,1fr)}
+  .stub{border-left:0;border-top:2px dashed var(--line)}
+}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+</style>
+<style>html{color-scheme:light}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+</head>
+<body>
+
+<header class="top wrap">
+  <button class="brand" data-act="home" data-testid="brand" aria-label="Safar home">
+    <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--accent)"/><circle cx="9" cy="22" r="3" fill="var(--on-accent)"/><circle cx="23" cy="10" r="3" fill="var(--on-accent)"/><path d="M9 22C9 14 23 18 23 10" fill="none" stroke="var(--on-accent)" stroke-width="2" stroke-dasharray="2 3"/></svg>
+    Safar
+  </button>
+  <nav id="nav" class="nav" aria-label="Main"></nav>
+</header>
+<main id="app" class="wrap"></main>
+<datalist id="cities"></datalist>
+<div id="modal"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(()=>{
+'use strict';
+const CITIES=['Chennai','Bengaluru','Coimbatore','Madurai','Hyderabad','Kochi','Tiruchirappalli','Salem','Puducherry','Tirupati'];
+const ALIAS={trichy:'Tiruchirappalli',bangalore:'Bengaluru',cochin:'Kochi',pondicherry:'Puducherry',coimbatore:'Coimbatore'};
+const FEE=25, MAXP=6, HOLD_MS=10*60*1000;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const inr=n=>'₹'+Math.round(n).toLocaleString('en-IN');
+const pad=n=>String(n).padStart(2,'0');
+
+/* storage with in-memory fallback */
+const mem={};
+const store={
+  get(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null}catch(e){return mem[k]==null?null:mem[k]}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){mem[k]=v}},
+  del(k){try{localStorage.removeItem(k)}catch(e){delete mem[k]}}
+};
+
+/* seeded random so the same search always returns the same schedule */
+function seed(str){
+  let h=1779033703^str.length;
+  for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19}
+  h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);h^=h>>>16;
+  let a=h>>>0;
+  return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+}
+const routeMin=(f,t)=>200+Math.floor(seed('route'+[f,t].sort().join('|'))()*360);
+
+/* dates and times */
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const todayStr=()=>ymd(new Date());
+const addDays=n=>{const d=new Date();d.setDate(d.getDate()+n);return ymd(d)};
+const fmtDate=s=>new Date(s+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+const clock=m=>{const d=Math.floor(m/1440);m=((m%1440)+1440)%1440;let h=Math.floor(m/60);const mm=m%60;const ap=h>=12?'PM':'AM';h=h%12||12;return `${pad(h)}:${pad(mm)} ${ap}`+(d>0?` +${d}d`:'')};
+const dur=m=>`${Math.floor(m/60)}h ${pad(m%60)}m`;
+const depTs=(date,min)=>{const d=new Date(date+'T00:00:00');d.setMinutes(min);return d.getTime()};
+const mmss=ms=>{const s=Math.max(0,Math.ceil(ms/1000));return `${pad(Math.floor(s/60))}:${pad(s%60)}`};
+
+/* ---------- sample data: buses ---------- */
+const OPS=['Kaveri Lines','Nilgiri Express','Marina Travels','Sahyadri Coaches','Coromandel Tours','Vaigai Travels','Palar Express','Anaimalai Lines'];
+const BTYPES=[
+  {n:'AC Sleeper (2+1)',ac:true,sl:true,f:150},
+  {n:'Non-AC Sleeper (2+1)',ac:false,sl:true,f:105},
+  {n:'AC Seater (2+2)',ac:true,sl:false,f:115},
+  {n:'Non-AC Seater (2+2)',ac:false,sl:false,f:78}
+];
+const BSLOTS=[330,480,780,1050,1185,1260,1290,1335,1380];
+function genBuses(from,to,date){
+  const r=seed(`bus|${from}|${to}|${date}`), base=routeMin(from,to), out=[];
+  for(let i=0;i<9;i++){
+    const t=BTYPES[Math.floor(r()*4)];
+    const d=Math.round((base+(r()*60-30))/5)*5;
+    const dep=BSLOTS[i];
+    out.push({
+      kind:'bus',key:`bus|${from}|${to}|${date}|${i}`,from,to,date,
+      op:OPS[(i+Math.floor(r()*8))%8],type:t,dep,dur:d,
+      rating:(3.6+r()*1.3).toFixed(1),
+      price:Math.max(250,Math.round(d/60*t.f/10)*10),
+      board:[{n:`${from} Bus Stand`,t:dep},{n:`${from} Bypass Junction`,t:dep+25},{n:`${from} Toll Plaza`,t:dep+40}],
+      drop:[{n:`${to} Toll Plaza`,t:dep+d-35},{n:`${to} Bypass Junction`,t:dep+d-15},{n:`${to} Bus Stand`,t:dep+d}]
+    });
+  }
+  return out;
+}
+function busSeats(bus){
+  if(bus._seats)return bus._seats;
+  const r=seed(bus.key+'|seats'), occ=.25+seed(bus.key+'|occ')()*.35, list=[];
+  const add=(id,sleeper)=>{const booked=r()<occ;const ladies=!booked&&r()<.1;list.push({id,label:id,booked,ladies,sleeper})};
+  if(bus.type.sl){for(const dk of ['L','U'])for(let rw=1;rw<=6;rw++)for(const c of ['A','B','C'])add(dk+rw+c,true)}
+  else{for(let rw=1;rw<=10;rw++)for(const c of ['A','B','C','D'])add(rw+c,false)}
+  bus._seats=list;return list;
+}
+
+/* ---------- sample data: trains ---------- */
+const TNAMES=['Nilgiri Superfast','Coastal Express','Deccan Intercity','Southern Mail','Vaigai Link','Sahyadri Express'];
+const CLSNAME={SL:'Sleeper','3A':'AC 3 Tier','2A':'AC 2 Tier','1A':'AC First',CC:'AC Chair Car'};
+const FAREF={SL:55,'3A':140,'2A':205,'1A':340,CC:115};
+const TDEP=[240,375,540,825,1110,1230,1335];
+const LAYOUTS={};
+function layoutFor(cls){
+  if(LAYOUTS[cls])return LAYOUTS[cls];
+  const L={cls};let n=0;
+  if(cls==='CC'){
+    L.kind='chair';L.coaches=['C1','C2'];L.rows=[];
+    for(let r=1;r<=12;r++){
+      const left=[{n:++n,t:'Window'},{n:++n,t:'Aisle'}];
+      const right=[{n:++n,t:'Aisle'},{n:++n,t:'Middle'},{n:++n,t:'Window'}];
+      L.rows.push({r,left,right});
+    }
+  }else{
+    L.kind='berth';
+    const cfg={
+      SL:{coaches:['S1','S2','S3'],tiers:['LB','MB','UB'],bays:9,side:true},
+      '3A':{coaches:['B1','B2'],tiers:['LB','MB','UB'],bays:8,side:true},
+      '2A':{coaches:['A1','A2'],tiers:['LB','UB'],bays:8,side:true},
+      '1A':{coaches:['H1'],tiers:['LB','UB'],bays:6,side:false}
+    }[cls];
+    L.coaches=cfg.coaches;L.bays=[];
+    for(let b=1;b<=cfg.bays;b++){
+      const c1=cfg.tiers.map(t=>({n:++n,t}));
+      const c2=cfg.tiers.map(t=>({n:++n,t}));
+      const side=cfg.side?[{n:++n,t:'SL'},{n:++n,t:'SU'}]:[];
+      L.bays.push({b,main:[c1,c2],side});
+    }
+  }
+  L.total=n;LAYOUTS[cls]=L;return L;
+}
+function genTrains(from,to,date){
+  const r=seed(`train|${from}|${to}|${date}`), base=routeMin(from,to), out=[];
+  for(let i=0;i<5;i++){
+    const d=Math.round((base*1.15+r()*50)/5)*5;
+    const dep=TDEP[Math.floor(r()*TDEP.length)];
+    const key=`train|${from}|${to}|${date}|${i}`;
+    const names=['SL','3A','2A'];if(r()<.6)names.push('1A');if(d<=480)names.push('CC');
+    const classes=names.map(c=>{
+      const rr=seed(key+c);const full=rr()<.18;
+      return{cls:c,fare:Math.round(d/60*FAREF[c]/5)*5,occ:full?1:.2+rr()*.6,full,wl:1+Math.floor(rr()*28),rac:rr()<.4,_b:{}};
+    });
+    out.push({kind:'train',key,from,to,date,name:TNAMES[(i+Math.floor(r()*6))%6],no:String(12000+Math.floor(r()*9000)),dep,dur:d,classes});
+  }
+  return out.sort((a,b)=>a.dep-b.dep);
+}
+function trainBooked(t,ci,coach){
+  if(ci._b[coach])return ci._b[coach];
+  const lay=layoutFor(ci.cls), s=new Set(), r=seed(`${t.key}|${ci.cls}|${coach}`);
+  for(let n=1;n<=lay.total;n++){if(ci.full||r()<ci.occ)s.add(`${coach}-${n}`)}
+  ci._b[coach]=s;return s;
+}
+function trainSeatList(t,ci){
+  const lay=layoutFor(ci.cls), m=mine(t.key), out=[];
+  for(const coach of lay.coaches){
+    const base=trainBooked(t,ci,coach);
+    const push=(n,tt)=>{const id=`${coach}-${n}`;out.push({id,coach,n,t:tt,label:`${coach}/${n} ${tt}`,booked:base.has(id)||m.has(id)})};
+    if(lay.kind==='berth'){lay.bays.forEach(b=>{b.main.forEach(c=>c.forEach(x=>push(x.n,x.t)));b.side.forEach(x=>push(x.n,x.t))})}
+    else lay.rows.forEach(r=>{r.left.concat(r.right).forEach(x=>push(x.n,x.t))});
+  }
+  return out;
+}
+function classInfo(t,ci){
+  const free=trainSeatList(t,ci).filter(s=>!s.booked).length;
+  if(free>0)return{free,status:'AVL',text:`Available ${free}`,cls:free<=6?'warn':'ok'};
+  if(ci.rac)return{free:0,status:'RAC',text:`RAC ${Math.min(ci.wl,20)}`,cls:'warn'};
+  return{free:0,status:'WAITLIST',text:`WL ${ci.wl}`,cls:'bad'};
+}
+
+/* ---------- state ---------- */
+const state={
+  mode:'train',view:'home',
+  search:{from:'Chennai',to:'Bengaluru',date:addDays(1),pax:1,cls:'ALL'},searchErr:'',
+  results:[],filter:{type:'all',sort:'dep'},
+  trip:null,cls:null,coach:0,sel:[],hold:null,noSeat:false,waitStatus:'',pref:'Any',
+  pax:[],contact:{mobile:'',email:''},board:0,drop:2,errors:{},
+  payMethod:'upi',payOutcome:'success',payErr:'',pending:false,
+  user:store.get('safar_user'),bookings:store.get('safar_bookings')||[],
+  tripsTab:'upcoming',cancelId:null,booking:null,
+  modal:null,afterLogin:null
+};
+const saveBookings=()=>store.set('safar_bookings',state.bookings);
+function mine(key){
+  const s=new Set();
+  state.bookings.forEach(b=>{if(b.tripKey===key&&b.status!=='CANCELLED')b.pax.forEach(p=>p.seat&&s.add(p.seat))});
+  return s;
+}
+const busLeft=b=>{const m=mine(b.key);return busSeats(b).filter(s=>!s.booked&&!m.has(s.id)).length};
+const classOf=t=>t.classes.find(c=>c.cls===state.cls);
+function paxCount(){return state.noSeat?state.search.pax:state.sel.length}
+function fare(){
+  const t=state.trip,n=paxCount();
+  const unit=t.kind==='bus'?t.price:classOf(t).fare;
+  const base=unit*n,fee=FEE*n;
+  return{unit,n,base,fee,total:base+fee};
+}
+
+/* ---------- views ---------- */
+function navHtml(){
+  const u=state.user,v=state.view;
+  return `<button class="navbtn${v!=='trips'?' on':''}" data-act="mode" data-mode="train" data-testid="nav-train">Book a train</button>
+  <button class="navbtn${v==='trips'?' on':''}" data-act="trips" data-testid="nav-trips">My trips</button>
+  ${u?`<span class="who" data-testid="user-email">${esc(u.name||u.email)}</span><button class="navbtn" data-act="logout" data-testid="logout-btn">Log out</button>`
+     :`<button class="btn small" data-act="login-open" data-testid="login-btn">Log in</button>`}`;
+}
+const ROUTES=[['Chennai','Bengaluru'],['Chennai','Madurai'],['Bengaluru','Hyderabad'],['Coimbatore','Kochi'],['Chennai','Tirupati']];
+
+function searchCard(){
+  const s=state.search,b=state.mode==='bus';
+  return `<form class="searchcard panel" id="sform" novalidate data-testid="search-form">
+    <h2>Find a train</h2>
+    <div class="route-row">
+      <div class="field"><label for="search-from">From</label><input id="search-from" data-testid="search-from" list="cities" autocomplete="off" value="${esc(s.from)}" data-s="from"></div>
+      <button type="button" class="swap" data-act="swap" aria-label="Swap from and to" data-testid="swap">⇄</button>
+      <div class="field"><label for="search-to">To</label><input id="search-to" data-testid="search-to" list="cities" autocomplete="off" value="${esc(s.to)}" data-s="to"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label for="search-date">Date</label><input id="search-date" data-testid="search-date" type="date" min="${todayStr()}" value="${esc(s.date)}" data-s="date"></div>
+      <div class="field"><label for="search-pax">Passengers</label><select id="search-pax" data-testid="search-pax" data-s="pax">${[1,2,3,4,5,6].map(n=>`<option value="${n}"${n===s.pax?' selected':''}>${n}</option>`).join('')}</select></div>
+      ${b?'':`<div class="field"><label for="search-class">Class</label><select id="search-class" data-testid="search-class" data-s="cls"><option value="ALL"${s.cls==='ALL'?' selected':''}>All classes</option>${['SL','3A','2A','1A','CC'].map(c=>`<option value="${c}"${s.cls===c?' selected':''}>${c} · ${CLSNAME[c]}</option>`).join('')}</select></div>`}
+    </div>
+    ${state.searchErr?`<p class="err" role="alert" data-testid="search-error">${esc(state.searchErr)}</p>`:''}
+    <button class="btn wide" type="submit" data-testid="search-btn">Search ${b?'buses':'trains'}</button>
+  </form>`;
+}
+function home(){
+  return `<section class="hero"><div class="intro">
+    <div class="pitch">
+      <p class="eyebrow">Train seats · Berths · One login</p>
+      <h1>Happy Booking &amp; Happy Journey</h1>
+      <p class="sub">Pick your coach and berth.</p>
+      <p class="lead">Search trains between South Indian cities, choose a lower berth or a window seat by coach, and pay once with a single login.</p>
+      <div class="chips" aria-label="Popular routes">${ROUTES.map(r=>`<button class="chip" data-act="route" data-from="${r[0]}" data-to="${r[1]}" data-testid="route-${r[0]}-${r[1]}">${r[0]} → ${r[1]}</button>`).join('')}</div>
+    </div>
+    ${searchCard()}
+  </div></section>
+  <section class="facts">
+    <div class="fact"><h3>10-minute seat hold</h3><p>Seats you pick stay yours while you fill in passenger details. When the timer ends, they go back on sale.</p></div>
+    <div class="fact"><h3>Booked seats stay locked</h3><p>A seat that is booked appears greyed out on the map and cannot be selected again.</p></div>
+    <div class="fact"><h3>Choose your berth</h3><p>On trains, pick lower, middle, upper or side berths by coach, or ask for an automatic assignment with a preference.</p></div>
+  </section>
+  <p class="note">Schedules, fares and seat availability on this site are generated sample data for demonstration.</p>`;
+}
+
+function resultsHead(){
+  const s=state.search;
+  return `<div class="sumbar panel"><div><strong>${esc(s.from)} → ${esc(s.to)}</strong> <span class="muted">· ${fmtDate(s.date)} · ${s.pax} passenger${s.pax>1?'s':''}</span></div><button class="btn ghost small" data-act="modify" data-testid="modify-search">Modify search</button></div>`;
+}
+function results(){
+  const b=state.mode==='bus';
+  let list=state.results.slice(),body='';
+  if(b){
+    const f=state.filter;
+    list=list.filter(x=>f.type==='all'||(f.type==='ac'&&x.type.ac)||(f.type==='nonac'&&!x.type.ac)||(f.type==='sleeper'&&x.type.sl)||(f.type==='seater'&&!x.type.sl));
+    const sorters={dep:(a,c)=>a.dep-c.dep,price:(a,c)=>a.price-c.price,dur:(a,c)=>a.dur-c.dur,rating:(a,c)=>c.rating-a.rating};
+    list.sort(sorters[f.sort]);
+    body=list.map(busCard).join('')||`<div class="empty panel">No buses match these filters.</div>`;
+  }else{
+    body=list.map(trainCard).join('')||`<div class="empty panel">No trains found for this search.</div>`;
+  }
+  const chips=[['all','All'],['ac','AC'],['nonac','Non-AC'],['sleeper','Sleeper'],['seater','Seater']];
+  const filters=b?`<div class="filters" role="group" aria-label="Filter buses">${chips.map(c=>`<button class="chip" aria-pressed="${state.filter.type===c[0]}" data-act="filter" data-v="${c[0]}" data-testid="filter-${c[0]}">${c[1]}</button>`).join('')}
+    <label class="lbl" for="sort" style="margin-left:auto">Sort</label>
+    <select id="sort" data-sort="1" data-testid="sort">${[['dep','Departure'],['price','Price'],['dur','Duration'],['rating','Rating']].map(o=>`<option value="${o[0]}"${state.filter.sort===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select></div>`:'<div style="height:14px"></div>';
+  return resultsHead()+filters+`<div class="list" data-testid="results">${body}</div>`;
+}
+function busCard(t){
+  const left=busLeft(t);
+  return `<article class="trip" data-testid="bus-result">
+    <div><h3>${esc(t.op)}</h3><p class="muted small">${esc(t.type.n)}</p><p style="margin-top:6px"><span class="badge">★ ${t.rating}</span></p></div>
+    <div class="times"><b>${clock(t.dep)}</b><span class="dur">${dur(t.dur)}</span><b>${clock(t.dep+t.dur)}</b></div>
+    <div class="buy"><div class="price">${inr(t.price)}<small>per seat</small></div><span class="small ${left<=6?'warn':'muted'}">${left} seats left</span>
+      <button class="btn" data-act="pick-bus" data-key="${esc(t.key)}" data-testid="select-seats">Select seats</button></div>
+  </article>`;
+}
+function trainCard(t){
+  const want=state.search.cls;
+  const tiles=t.classes.filter(c=>want==='ALL'||c.cls===want).map(c=>{
+    const info=classInfo(t,c);
+    return `<button class="cls" data-act="pick-class" data-key="${esc(t.key)}" data-cls="${c.cls}" data-testid="class-${t.no}-${c.cls}">
+      <span class="top1"><span>${c.cls}</span><span>${inr(c.fare)}</span></span><span class="st ${info.cls}">${info.text}</span></button>`;
+  }).join('')||`<p class="muted small">${want} is not offered on this train.</p>`;
+  return `<article class="trip" data-testid="train-result">
+    <div><h3>${esc(t.name)}</h3><p class="muted small mono">${t.no}</p></div>
+    <div class="times"><b>${clock(t.dep)}</b><span class="dur">${dur(t.dur)}</span><b>${clock(t.dep+t.dur)}</b></div>
+    <div></div>
+    <div class="classes">${tiles}</div>
+  </article>`;
+}
+
+/* summary aside shared by seats, passengers, payment */
+function summary(btn){
+  const t=state.trip,q=fare(),b=t.kind==='bus';
+  const title=b?t.op:`${t.name} ${t.no}`;
+  const sub=b?t.type.n:`${CLSNAME[state.cls]} (${state.cls})`;
+  const chips=state.noSeat?`<span class="badge">${state.waitStatus==='RAC'?'RAC':'Waitlist'} · no seat yet</span>`
+    :(state.sel.length?state.sel.map(s=>`<span class="tag" data-testid="chosen-${esc(s.id)}">${esc(s.label)}</span>`).join(''):'<span class="muted small">No seats selected yet</span>');
+  return `<aside class="panel summary" data-testid="summary">
+    <div><h3>${esc(title)}</h3><p class="muted small">${esc(sub)}</p><p class="muted small">${esc(t.from)} → ${esc(t.to)} · ${fmtDate(t.date)} · ${clock(t.dep)}</p></div>
+    <div class="sel-list">${chips}</div>
+    ${state.hold?`<div class="hold" data-testid="hold">Seats held for <b id="holdclock" data-testid="hold-clock">${mmss(state.hold.exp-Date.now())}</b></div>`:''}
+    <div class="stack" style="gap:6px">
+      <div class="line"><span>Fare (${q.n} × ${inr(q.unit)})</span><span>${inr(q.base)}</span></div>
+      <div class="line"><span>Service fee</span><span>${inr(q.fee)}</span></div>
+      <div class="line total"><span>Total</span><span data-testid="total">${inr(q.total)}</span></div>
+    </div>${btn}</aside>`;
+}
+
+const LEGEND=`<div class="legend" aria-hidden="true"><span><i class="sw"></i>Available</span><span><i class="sw s"></i>Selected</span><span><i class="sw b"></i>Booked</span><span><i class="sw l"></i>Ladies only</span></div>`;
+function seatBtn(o){
+  return `<button type="button" class="seat${o.cls||''}${o.ladies?' ladies':''}${o.sel?' sel':''}" data-act="seat" data-id="${o.id}" data-label="${esc(o.label)}" data-ladies="${o.ladies?1:0}" data-testid="seat-${o.id}" aria-pressed="${!!o.sel}" aria-label="Seat ${esc(o.label)}${o.ladies?', ladies only':''}${o.booked?', booked':''}"${o.booked?' disabled':''}>${o.text}</button>`;
+}
+const WHEEL=`<svg viewBox="0 0 24 24" width="22" height="22" role="img" aria-label="Driver"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M3 12h6M15 12h6M12 14v7" stroke="currentColor" stroke-width="2" fill="none"/></svg>`;
+
+function busMap(t){
+  const list=busSeats(t),m=mine(t.key),sel=new Set(state.sel.map(s=>s.id)),by={};
+  list.forEach(s=>by[s.id]=s);
+  const btn=id=>{const s=by[id];return seatBtn({id:s.id,label:s.label,text:s.label,ladies:s.ladies,booked:s.booked||m.has(s.id),sel:sel.has(s.id),cls:s.sleeper?' sleeper':''})};
+  let decks='';
+  if(t.type.sl){
+    decks=['L','U'].map(dk=>{
+      let rows='';
+      for(let r=1;r<=6;r++)rows+=`<div class="srow"><div class="pair">${btn(dk+r+'A')}${btn(dk+r+'B')}</div><div class="aisle"></div><div class="pair">${btn(dk+r+'C')}</div></div>`;
+      return `<div class="deck"><div class="deck-head"><span>${dk==='L'?'Lower deck':'Upper deck'}</span>${dk==='L'?WHEEL:'<span></span>'}</div>${rows}</div>`;
+    }).join('');
+  }else{
+    let rows='';
+    for(let r=1;r<=10;r++)rows+=`<div class="srow"><div class="pair">${btn(r+'A')}${btn(r+'B')}</div><div class="aisle"></div><div class="pair">${btn(r+'C')}${btn(r+'D')}</div></div>`;
+    decks=`<div class="deck"><div class="deck-head"><span>Seats</span>${WHEEL}</div>${rows}</div>`;
+  }
+  return LEGEND+`<div class="decks" data-testid="seat-map">${decks}</div>`;
+}
+const ABBR={Window:'W',Aisle:'A',Middle:'M'};
+const TIERS={LB:'Lower berth',MB:'Middle berth',UB:'Upper berth',SL:'Side lower berth',SU:'Side upper berth'};
+const BLEGEND=`<div class="legend" aria-hidden="true"><span><i class="sw a"></i>Available</span><span><i class="sw s"></i>Selected</span><span><i class="sw b"></i>Sold</span></div><p class="muted small" style="margin-bottom:10px">LB lower · MB middle · UB upper · SL side lower · SU side upper</p>`;
+function trainMap(t){
+  const ci=classOf(t),lay=layoutFor(ci.cls),coach=lay.coaches[state.coach];
+  const base=trainBooked(t,ci,coach),m=mine(t.key),sel=new Set(state.sel.map(s=>s.id));
+  const all=trainSeatList(t,ci);
+  const btn=(n,tt)=>{
+    const id=`${coach}-${n}`;
+    return seatBtn({id,label:`${coach}/${n} ${tt}`,text:lay.kind==='berth'?`<span>${n}</span><small>${tt}</small>`:`<span>${n}</span><small>${ABBR[tt]}</small>`,booked:base.has(id)||m.has(id),sel:sel.has(id),cls:' berth'});
+  };
+  const tabs=lay.coaches.map((c,i)=>{const free=all.filter(s=>s.coach===c&&!s.booked).length;return `<button class="coachbtn" role="tab" aria-selected="${i===state.coach}" data-act="coach" data-i="${i}" data-testid="coach-${c}">${c} · ${free} free</button>`}).join('');
+  let map='';
+  if(lay.kind==='berth'){
+    const fareTxt=inr(ci.fare);
+    const cell=(n,tt)=>{
+      const id=`${coach}-${n}`,booked=base.has(id)||m.has(id),on=sel.has(id);
+      return `<div class="bcell"><button type="button" class="berthbtn${on?' sel':''}" data-act="seat" data-id="${id}" data-label="${coach}/${n} ${tt}" data-ladies="0" data-testid="seat-${id}" aria-pressed="${on}" aria-label="Berth ${coach}/${n}, ${TIERS[tt]}${booked?', sold':''}"${booked?' disabled':''}><span class="bn">${n}</span><i class="pil"></i></button><span class="pr">${booked?'Sold':fareTxt}</span></div>`;
+    };
+    const tiers=lay.bays[0].main[0].map(x=>x.t);
+    const hcell=x=>`<div class="bcell"><span class="pr">${x}</span></div>`;
+    const hasSide=lay.bays[0].side.length>0;
+    const head=`<div class="brow bhead" aria-hidden="true"><span class="bay-no"></span><div class="grp">${tiers.map(hcell).join('')}</div><div class="grp">${tiers.map(hcell).join('')}</div>${hasSide?`<div class="grp side">${['SL','SU'].map(hcell).join('')}</div>`:''}</div>`;
+    const rows=lay.bays.map(b=>`<div class="brow"><span class="bay-no">${b.b}</span><div class="grp">${b.main[0].map(x=>cell(x.n,x.t)).join('')}</div><div class="grp">${b.main[1].map(x=>cell(x.n,x.t)).join('')}</div>${b.side.length?`<div class="grp side">${b.side.map(x=>cell(x.n,x.t)).join('')}</div>`:''}</div>`).join('');
+    map=`<div class="decks"><div class="deck"><div class="deck-head"><span>Coach ${coach} · ${CLSNAME[ci.cls]}</span></div>${head}${rows}</div></div>`;
+  }else{
+    map=`<div class="chairs">${lay.rows.map(r=>`<div class="srow"><div class="pair">${r.left.map(x=>btn(x.n,x.t)).join('')}</div><div class="aisle"></div><div class="pair">${r.right.map(x=>btn(x.n,x.t)).join('')}</div></div>`).join('')}</div>`;
+  }
+  const auto=`<div class="autobar">${lay.kind==='berth'?`<div class="field"><label for="pref">Berth preference</label><select id="pref" data-pref="1" data-testid="berth-pref">${['Any','LB','MB','UB','SL','SU'].map(p=>`<option${state.pref===p?' selected':''}>${p}</option>`).join('')}</select></div>`:''}
+    <button class="btn ghost" data-act="auto" data-testid="auto-assign">Auto-assign ${state.search.pax} ${lay.kind==='berth'?'berth':'seat'}${state.search.pax>1?'s':''}</button></div>`;
+  return `<div class="coaches" role="tablist" aria-label="Coach">${tabs}</div>${auto}${lay.kind==='berth'?BLEGEND:LEGEND}<div data-testid="seat-map">${map}</div>`;
+}
+function seats(){
+  const t=state.trip,q=state.sel.length;
+  const btn=`<button class="btn wide" data-act="to-pax" data-testid="continue-btn"${q?'':' disabled'}>Continue with ${q||0} seat${q===1?'':'s'}</button>`;
+  return `<div class="crumb"><button class="linkbtn" data-act="back-results" data-testid="back-results">← Back to results</button></div>
+  <div class="seatgrid"><section class="panel"><h2>${t.kind==='bus'?'Choose your seats':`Choose seats in ${esc(CLSNAME[state.cls])}`}</h2><p class="muted small">Select up to ${MAXP}. Selected seats are held for 10 minutes.</p>
+  ${t.kind==='bus'?busMap(t):trainMap(t)}</section>${summary(btn)}</div>`;
+}
+
+function ensurePax(n){
+  while(state.pax.length<n)state.pax.push({name:'',age:'',gender:''});
+  state.pax.length=n;
+  if(!state.contact.email&&state.user)state.contact.email=state.user.email;
+}
+const fe=k=>state.errors[k]?`<span class="err" id="e-${k}">${esc(state.errors[k])}</span>`:'';
+const inv=k=>state.errors[k]?` aria-invalid="true" aria-describedby="e-${k}"`:'';
+function passengers(){
+  const t=state.trip,n=paxCount();ensurePax(n);
+  const forms=state.pax.map((p,i)=>{
+    const s=state.sel[i];
+    return `<fieldset class="pax"><legend>Passenger ${i+1} · ${esc(s?s.label:(state.waitStatus==='RAC'?'RAC':'Waitlist'))}</legend>
+    <div class="grid3">
+      <div class="field"><label for="pname-${i}">Full name</label><input id="pname-${i}" data-testid="pname-${i}" data-p="name" data-i="${i}" value="${esc(p.name)}" autocomplete="off"${inv('name-'+i)}>${fe('name-'+i)}</div>
+      <div class="field"><label for="page-${i}">Age</label><input id="page-${i}" data-testid="page-${i}" data-p="age" data-i="${i}" inputmode="numeric" value="${esc(p.age)}"${inv('age-'+i)}>${fe('age-'+i)}</div>
+      <div class="field"><label for="pgender-${i}">Gender</label><select id="pgender-${i}" data-testid="pgender-${i}" data-p="gender" data-i="${i}"${inv('gender-'+i)}><option value="">Select</option>${['Female','Male','Other'].map(g=>`<option${p.gender===g?' selected':''}>${g}</option>`).join('')}</select>${fe('gender-'+i)}</div>
+    </div>${s&&s.ladies?'<p class="small" style="color:var(--ladies);margin-top:8px">Ladies-only seat</p>':''}</fieldset>`;
+  }).join('');
+  const bus=t.kind==='bus';
+  const points=bus?`<div class="grid2" style="margin-bottom:12px">
+    <div class="field"><label for="board">Boarding point</label><select id="board" data-testid="boarding" data-pt="board">${t.board.map((x,i)=>`<option value="${i}"${state.board===i?' selected':''}>${esc(x.n)} · ${clock(x.t)}</option>`).join('')}</select></div>
+    <div class="field"><label for="drop">Dropping point</label><select id="drop" data-testid="dropping" data-pt="drop">${t.drop.map((x,i)=>`<option value="${i}"${state.drop===i?' selected':''}>${esc(x.n)} · ${clock(x.t)}</option>`).join('')}</select></div></div>`:'';
+  const notice=state.noSeat?`<div class="banner warn" style="margin-bottom:12px" data-testid="wl-notice">${state.waitStatus==='RAC'?'This class is full. A RAC ticket gives you a shared berth and a confirmed berth if someone cancels.':'This class is full. A waitlisted ticket is confirmed only if other passengers cancel.'} You can still cancel for a refund.</div>`:'';
+  const btn=`<button class="btn wide" data-act="to-pay" data-testid="to-payment">Continue to payment</button><button class="btn ghost wide" data-act="${state.noSeat?'back-results':'back-seats'}">${state.noSeat?'Back to results':'Change seats'}</button>`;
+  return `<div class="crumb"><button class="linkbtn" data-act="${state.noSeat?'back-results':'back-seats'}">← ${state.noSeat?'Back to results':'Back to seats'}</button></div>
+  <div class="seatgrid"><section class="panel"><h2>Passenger details</h2><p class="muted small" style="margin-bottom:14px">Names must match the ID carried while travelling.</p>
+  ${notice}${points}${forms}
+  <div class="grid2"><div class="field"><label for="mobile">Mobile number</label><input id="mobile" data-testid="contact-mobile" data-c="mobile" inputmode="numeric" maxlength="10" value="${esc(state.contact.mobile)}"${inv('mobile')}>${fe('mobile')}</div>
+  <div class="field"><label for="email">Email</label><input id="email" data-testid="contact-email" data-c="email" type="email" value="${esc(state.contact.email)}"${inv('email')}>${fe('email')}</div></div>
+  </section>${summary(btn)}</div>`;
+}
+
+function payment(){
+  const btn=`<button class="btn wide" data-act="pay" data-testid="pay-now-btn"${state.pending?' disabled':''}>Pay ${inr(fare().total)}</button>`;
+  const methods=[['upi','UPI'],['card','Debit or credit card'],['net','Net banking']];
+  return `<div class="crumb"><button class="linkbtn" data-act="back-pax">← Back to passengers</button></div>
+  <div class="seatgrid"><section class="panel stack"><h2>Payment</h2>
+    <div class="stack" style="gap:8px" role="radiogroup" aria-label="Payment method">${methods.map(m=>`<label class="opt"><input type="radio" name="method" value="${m[0]}" data-pay="method" data-testid="method-${m[0]}"${state.payMethod===m[0]?' checked':''}>${m[1]}</label>`).join('')}</div>
+    <div class="field"><label for="outcome">Test outcome</label><select id="outcome" data-pay="outcome" data-testid="pay-outcome"><option value="success"${state.payOutcome==='success'?' selected':''}>Payment succeeds</option><option value="failure"${state.payOutcome==='failure'?' selected':''}>Payment fails</option><option value="pending"${state.payOutcome==='pending'?' selected':''}>Payment stays pending</option></select>
+    <span class="muted small">Mock gateway for testing. No real payment is taken.</span></div>
+    ${state.payErr?`<div class="banner bad" role="alert" data-testid="pay-error">${esc(state.payErr)}</div>`:''}
+    ${state.pending?`<div class="banner warn" role="status" data-testid="pay-pending">Payment is pending with your bank. Your seats stay held until the timer ends.<div style="margin-top:8px"><button class="btn small" data-act="refresh-status" data-testid="refresh-status">Check payment status</button></div></div>`:''}
+  </section>${summary(btn)}</div>`;
+}
+
+function stText(s){return s==='CONFIRMED'?'Confirmed':s==='RAC'?'RAC':s==='WAITLIST'?'Waitlist':'Cancelled'}
+function paxTable(b){
+  return `<div class="tablewrap"><table><thead><tr><th>Passenger</th><th>Age / sex</th><th>${b.type==='bus'?'Seat':'Berth'}</th></tr></thead><tbody>${b.pax.map(p=>`<tr><td>${esc(p.name)}</td><td>${p.age} / ${esc(p.gender[0])}${p.age>=60&&b.type==='train'?' · Senior':''}</td><td class="mono">${esc(p.label)}</td></tr>`).join('')}</tbody></table></div>`;
+}
+function ticket(){
+  const b=state.booking,ok=b.status==='CONFIRMED';
+  return `<div class="crumb"></div>
+  <div class="banner ${ok?'ok':'warn'}" role="status" style="margin-bottom:12px"><strong data-testid="booking-status">${ok?'Booking confirmed':b.status==='RAC'?'Booked on RAC':'Added to the waitlist'}</strong> · A confirmation would be sent to ${esc(b.contact.email)} and +91 ${esc(b.contact.mobile)}.</div>
+  <article class="ticket panel" data-testid="ticket"><div class="t-main">
+    <div><p class="lbl">${esc(b.title)} · ${esc(b.sub)}</p><p class="big-route">${esc(b.from)} → ${esc(b.to)}</p></div>
+    <div class="times"><div><p class="lbl">Departs</p><b>${fmtDate(b.date)}, ${clock(b.dep)}</b></div><div><p class="lbl">Arrives</p><b>${clock(b.arr)}</b></div></div>
+    ${b.boarding?`<p class="small"><span class="muted">Boarding:</span> ${esc(b.boarding)} &nbsp; <span class="muted">Dropping:</span> ${esc(b.dropping)}</p>`:''}
+    ${paxTable(b)}
+    <div class="line total"><span>Total paid</span><span>${inr(b.total)}</span></div>
+  </div><div class="stub"><p class="lbl">PNR</p><p class="pnr" data-testid="pnr">${b.pnr}</p><p class="lbl" style="margin-top:10px">Status</p><p><span class="status ${ok?'ok':'warn'}">${stText(b.status)}</span></p></div></article>
+  <p class="note">Demo ticket generated from sample data. It is not valid for travel.</p>
+  <div class="actions"><button class="btn" data-act="trips" data-testid="view-trips">View my trips</button><button class="btn ghost" data-act="new-search">Book another trip</button></div>`;
+}
+
+function refundInfo(b){
+  const h=(b.depTs-Date.now())/36e5;
+  const pct=h>24?100:h>=6?50:0;
+  return{h,pct,amount:Math.round(b.base*pct/100)};
+}
+function trips(){
+  if(!state.user)return `<div class="crumb"></div><div class="panel empty" data-testid="trips-login"><h2 style="margin-bottom:8px">Log in to see your trips</h2><p style="margin-bottom:14px">Your bus and train bookings are listed together under one account.</p><button class="btn" data-act="login-open">Log in</button></div>`;
+  const now=Date.now();
+  const mineB=state.bookings.filter(b=>b.user===state.user.email).sort((a,b)=>a.depTs-b.depTs);
+  const tabs={upcoming:mineB.filter(b=>b.status!=='CANCELLED'&&b.depTs>now),completed:mineB.filter(b=>b.status!=='CANCELLED'&&b.depTs<=now),cancelled:mineB.filter(b=>b.status==='CANCELLED')};
+  const cur=tabs[state.tripsTab];
+  const cards=cur.map(b=>{
+    const r=refundInfo(b);
+    const cancelBox=state.cancelId===b.id?`<div class="cancelbox" data-testid="cancel-box"><p><strong>Refund: ${inr(r.amount)}</strong> <span class="muted">(${r.pct}% of the fare${r.pct===0?', departure is under 6 hours away':r.pct===50?', departure is 6 to 24 hours away':', departure is over 24 hours away'}; the service fee is not refunded)</span></p><div class="actions" style="margin:0"><button class="btn danger" data-act="cancel-do" data-id="${b.id}" data-testid="cancel-confirm">Cancel booking</button><button class="btn ghost" data-act="cancel-keep">Keep booking</button></div></div>`:'';
+    return `<article class="panel tripcard" data-testid="trip-card">
+      <div class="head"><div><p class="lbl">${b.type==='bus'?'Bus':'Train'} · ${esc(b.title)}</p><h3>${esc(b.from)} → ${esc(b.to)}</h3><p class="muted small">${fmtDate(b.date)}, ${clock(b.dep)} · PNR <span class="mono">${b.pnr}</span></p></div><span class="status ${b.status==='CANCELLED'?'bad':b.status==='CONFIRMED'?'ok':'warn'}" data-testid="trip-status">${stText(b.status)}</span></div>
+      ${paxTable(b)}
+      <div class="line"><span>${b.status==='CANCELLED'?`Refunded ${inr(b.refund||0)}`:`Total paid`}</span><strong>${inr(b.total)}</strong></div>
+      ${cancelBox}
+      ${tabs.upcoming.includes(b)&&state.cancelId!==b.id?`<div><button class="btn ghost small" data-act="cancel-ask" data-id="${b.id}" data-testid="cancel-btn">Cancel booking</button></div>`:''}
+    </article>`;
+  }).join('')||`<div class="panel empty" data-testid="trips-empty">No ${state.tripsTab} trips yet.</div>`;
+  return `<div class="crumb"></div><h2>My trips</h2>
+  <div class="subtabs" role="tablist">${['upcoming','completed','cancelled'].map(k=>`<button class="coachbtn" role="tab" aria-selected="${state.tripsTab===k}" data-act="trips-tab" data-k="${k}" data-testid="tab-${k}">${k[0].toUpperCase()+k.slice(1)} (${tabs[k].length})</button>`).join('')}</div>
+  <div class="stack" style="margin-bottom:30px">${cards}</div>`;
+}
+
+/* ---------- modal (login) ---------- */
+function renderModal(){
+  const m=state.modal,el=$('#modal');
+  if(!m){el.innerHTML='';return}
+  const reg=m==='register';
+  el.innerHTML=`<div class="overlay" data-overlay="1"><form class="modal" id="lform" role="dialog" aria-modal="true" aria-labelledby="mt" novalidate data-testid="login-modal">
+    <h2 id="mt">${reg?'Create account':'Log in'}</h2>
+    <p class="muted small">One account for bus and train bookings.</p>
+    ${reg?`<div class="field"><label for="l-name">Name</label><input id="l-name" data-testid="login-name" autocomplete="name"></div>`:''}
+    <div class="field"><label for="l-email">Email</label><input id="l-email" data-testid="login-email" type="email" autocomplete="email"></div>
+    <div class="field"><label for="l-pass">Password</label><input id="l-pass" data-testid="login-password" type="password" autocomplete="${reg?'new-password':'current-password'}"></div>
+    <p class="err" id="l-err" role="alert" data-testid="login-error"></p>
+    <button class="btn" type="submit" data-testid="login-submit">${reg?'Create account':'Log in'}</button>
+    <button class="linkbtn" type="button" data-act="auth-switch" data-testid="auth-switch">${reg?'I already have an account':'Create a new account'}</button>
+    <button class="btn ghost" type="button" data-act="modal-close" data-testid="login-close">Close</button>
+    <p class="demo">Demo sign-in: any valid email and a password of 8 or more characters works. Swap this module for your Supergarden login.</p>
+  </form></div>`;
+  const first=reg?$('#l-name'):$('#l-email');first&&first.focus();
+}
+function submitLogin(){
+  const reg=state.modal==='register';
+  const email=$('#l-email').value.trim(),pass=$('#l-pass').value,name=reg?$('#l-name').value.trim():'';
+  const err=m=>{$('#l-err').textContent=m};
+  if(reg&&name.length<2)return err('Enter your name.');
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email))return err('Enter a valid email address.');
+  if(pass.length<8)return err('Password must be at least 8 characters.');
+  state.user={email,name:name||email.split('@')[0]};
+  store.set('safar_user',state.user);
+  state.modal=null;renderModal();
+  toast(`Signed in as ${state.user.email}`);
+  const next=state.afterLogin;state.afterLogin=null;
+  if(next==='payment'){state.contact.email=state.contact.email||email;go('payment')}else render();
+}
+
+/* ---------- rendering ---------- */
+const VIEWS={home,results,seats,passengers,payment,ticket,trips};
+function render(){
+  const ae=document.activeElement;
+  const keep=ae&&ae.dataset&&ae.dataset.id?ae.dataset.id:null;
+  document.body.dataset.mode=state.mode;
+  $('#nav').innerHTML=navHtml();
+  $('#app').innerHTML=VIEWS[state.view]();
+  if(keep){const n=document.querySelector(`[data-id="${CSS.escape(keep)}"]`);if(n)n.focus({preventScroll:true})}
+}
+function go(v){state.view=v;render();window.scrollTo(0,0)}
+let tt;
+function toast(m){const el=$('#toast');el.textContent=m;el.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('on'),3500)}
+
+/* ---------- actions ---------- */
+const resolve=v=>{v=(v||'').trim().toLowerCase();if(!v)return null;if(ALIAS[v])return ALIAS[v];return CITIES.find(c=>c.toLowerCase()===v)||CITIES.find(c=>c.toLowerCase().startsWith(v))||null};
+function doSearch(){
+  const s=state.search,f=resolve(s.from),t=resolve(s.to);
+  let e='';
+  if(!f)e='Choose a city from the list for From.';
+  else if(!t)e='Choose a city from the list for To.';
+  else if(f===t)e='From and To must be different cities.';
+  else if(!s.date||s.date<todayStr())e='Pick today or a later date.';
+  state.searchErr=e;
+  if(e){render();return}
+  s.from=f;s.to=t;
+  state.results=state.mode==='bus'?genBuses(f,t,s.date):genTrains(f,t,s.date);
+  state.filter={type:'all',sort:'dep'};
+  go('results');
+}
+function openTrip(t,cls){
+  Object.assign(state,{trip:t,cls:cls||null,coach:0,sel:[],hold:null,pax:[],errors:{},board:0,drop:2,noSeat:false,waitStatus:'',payErr:'',pending:false,pref:'Any'});
+}
+function syncHold(){
+  if(state.sel.length&&!state.hold)state.hold={key:state.trip.key,exp:Date.now()+HOLD_MS};
+  else if(!state.sel.length)state.hold=null;
+}
+function toggleSeat(id,label,ladies){
+  const i=state.sel.findIndex(s=>s.id===id);
+  if(i>=0)state.sel.splice(i,1);
+  else{
+    if(state.sel.length>=MAXP){toast(`You can select up to ${MAXP} seats per booking.`);return}
+    state.sel.push({id,label,ladies});
+  }
+  syncHold();render();
+}
+function autoAssign(){
+  const t=state.trip,ci=classOf(t),n=state.search.pax,pref=state.pref;
+  const free=trainSeatList(t,ci).filter(s=>!s.booked);
+  let pick=pref==='Any'?[]:free.filter(s=>s.t===pref).slice(0,n);
+  if(pick.length<n){
+    if(pref!=='Any'&&pick.length)toast(`Only ${pick.length} ${pref} berth${pick.length>1?'s':''} free. Filled the rest with other berths.`);
+    else if(pref!=='Any')toast(`No ${pref} berths free. Assigned other berths.`);
+    const ids=new Set(pick.map(s=>s.id));
+    pick=pick.concat(free.filter(s=>!ids.has(s.id)).slice(0,n-pick.length));
+  }
+  if(pick.length<n)toast(`Only ${pick.length} seat${pick.length===1?'':'s'} left in this class.`);
+  state.sel=pick.map(s=>({id:s.id,label:s.label,ladies:false}));
+  if(pick.length)state.coach=Math.max(0,layoutFor(ci.cls).coaches.indexOf(pick[0].coach));
+  syncHold();render();
+}
+function validate(){
+  const e={};
+  state.pax.forEach((p,i)=>{
+    if(!/^[A-Za-z][A-Za-z .'-]{1,39}$/.test(p.name.trim()))e['name-'+i]='Enter the name using letters only, 2 to 40 characters.';
+    const a=Number(p.age);
+    if(!p.age||!Number.isInteger(a)||a<1||a>120)e['age-'+i]='Enter an age between 1 and 120.';
+    if(!p.gender)e['gender-'+i]='Select a gender.';
+    const s=state.sel[i];
+    if(s&&s.ladies&&p.gender&&p.gender!=='Female')e['gender-'+i]='This is a ladies-only seat. Select Female or choose another seat.';
+  });
+  if(!/^[6-9]\d{9}$/.test(state.contact.mobile.trim()))e.mobile='Enter a 10-digit mobile number starting with 6 to 9.';
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(state.contact.email.trim()))e.email='Enter a valid email address.';
+  return e;
+}
+function toPay(){
+  state.errors=validate();
+  if(Object.keys(state.errors).length){
+    render();
+    const bad=document.querySelector('[aria-invalid="true"]');
+    if(bad)bad.focus();
+    return;
+  }
+  if(!state.user){state.afterLogin='payment';state.modal='login';renderModal();return}
+  go('payment');
+}
+function pay(){
+  const o=state.payOutcome;
+  state.payErr='';
+  if(o==='failure'){state.payErr='The bank declined the payment. No money was taken. Try again or choose another method.';render();return}
+  if(o==='pending'&&!state.pending){state.pending=true;render();return}
+  finalize();
+}
+function finalize(){
+  const t=state.trip,q=fare(),bus=t.kind==='bus';
+  if(!state.noSeat){
+    const taken=mine(t.key);
+    if(state.sel.some(s=>taken.has(s.id))){state.payErr='One of your seats was just taken. Go back and choose another seat.';state.pending=false;render();return}
+  }
+  const status=state.noSeat?state.waitStatus:'CONFIRMED';
+  const ci=bus?null:classOf(t);
+  const b={
+    id:'b'+Date.now(),
+    pnr:bus?'SF'+String(Math.floor(Math.random()*1e8)).padStart(8,'0'):'4'+String(Math.floor(Math.random()*1e9)).padStart(9,'0'),
+    type:t.kind,tripKey:t.key,from:t.from,to:t.to,date:t.date,dep:t.dep,arr:t.dep+t.dur,depTs:depTs(t.date,t.dep),
+    title:bus?t.op:`${t.name} ${t.no}`,sub:bus?t.type.n:`${CLSNAME[ci.cls]} (${ci.cls})`,cls:ci?ci.cls:null,
+    boarding:bus?t.board[state.board].n:null,dropping:bus?t.drop[state.drop].n:null,
+    status,pax:state.pax.map((p,i)=>({name:p.name.trim(),age:Number(p.age),gender:p.gender,seat:state.sel[i]?state.sel[i].id:null,label:state.sel[i]?state.sel[i].label:stText(status)})),
+    contact:{mobile:state.contact.mobile.trim(),email:state.contact.email.trim()},
+    base:q.base,fee:q.fee,total:q.total,createdAt:Date.now(),user:state.user.email
+  };
+  state.bookings.push(b);saveBookings();
+  state.booking=b;state.sel=[];state.hold=null;state.pax=[];state.pending=false;state.payErr='';
+  go('ticket');
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+  if(e.target.dataset&&e.target.dataset.overlay){state.modal=null;state.afterLogin=null;renderModal();return}
+  const el=e.target.closest('[data-act]');if(!el)return;
+  const a=el.dataset.act,d=el.dataset;
+  switch(a){
+    case'home':state.view='home';go('home');break;
+    case'mode':state.mode=d.mode;state.searchErr='';if(state.view!=='home'){state.results=[];}go('home');break;
+    case'swap':{const s=state.search;[s.from,s.to]=[s.to,s.from];render();break}
+    case'route':state.search.from=d.from;state.search.to=d.to;state.searchErr='';render();break;
+    case'modify':go('home');break;
+    case'new-search':go('home');break;
+    case'filter':state.filter.type=d.v;render();break;
+    case'pick-bus':{const t=state.results.find(x=>x.key===d.key);openTrip(t,null);go('seats');break}
+    case'pick-class':{
+      const t=state.results.find(x=>x.key===d.key);openTrip(t,d.cls);
+      const info=classInfo(t,classOf(t));
+      if(info.free>0)go('seats');else{state.noSeat=true;state.waitStatus=info.status;go('passengers')}
+      break}
+    case'back-results':go('results');break;
+    case'seat':toggleSeat(d.id,d.label,d.ladies==='1');break;
+    case'coach':state.coach=Number(d.i);render();break;
+    case'auto':autoAssign();break;
+    case'to-pax':if(state.sel.length){state.errors={};go('passengers')}break;
+    case'back-seats':go('seats');break;
+    case'to-pay':toPay();break;
+    case'back-pax':go('passengers');break;
+    case'pay':pay();break;
+    case'refresh-status':finalize();break;
+    case'trips':state.cancelId=null;go('trips');break;
+    case'trips-tab':state.tripsTab=d.k;state.cancelId=null;render();break;
+    case'cancel-ask':state.cancelId=d.id;render();break;
+    case'cancel-keep':state.cancelId=null;render();break;
+    case'cancel-do':{
+      const b=state.bookings.find(x=>x.id===d.id);
+      if(b){const r=refundInfo(b);b.status='CANCELLED';b.refund=r.amount;saveBookings();toast(`Booking cancelled. Refund of ${inr(r.amount)} initiated.`)}
+      state.cancelId=null;state.tripsTab='cancelled';render();break}
+    case'login-open':state.modal='login';renderModal();break;
+    case'auth-switch':state.modal=state.modal==='login'?'register':'login';renderModal();break;
+    case'modal-close':state.modal=null;state.afterLogin=null;renderModal();break;
+    case'logout':state.user=null;store.del('safar_user');state.contact.email='';toast('Logged out.');if(state.view==='payment')state.view='passengers';render();break;
+  }
+});
+document.addEventListener('submit',e=>{
+  if(e.target.id==='sform'){e.preventDefault();doSearch()}
+  else if(e.target.id==='lform'){e.preventDefault();submitLogin()}
+});
+function onField(e){
+  const el=e.target,d=el.dataset;if(!d)return;
+  if(d.s){const s=state.search;s[d.s]=d.s==='pax'?Number(el.value):el.value;return}
+  if(d.p){const p=state.pax[Number(d.i)];if(p)p[d.p]=el.value;return}
+  if(d.c){state.contact[d.c]=el.value;return}
+  if(d.pt){state[d.pt]=Number(el.value);return}
+  if(d.pref){state.pref=el.value;return}
+  if(d.pay){if(d.pay==='method')state.payMethod=el.value;else{state.payOutcome=el.value;state.payErr=''}return}
+  if(d.sort&&e.type==='change'){state.filter.sort=el.value;render()}
+}
+document.addEventListener('input',onField);
+document.addEventListener('change',onField);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.modal){state.modal=null;state.afterLogin=null;renderModal()}});
+
+/* seat hold countdown */
+setInterval(()=>{
+  if(!state.hold)return;
+  const left=state.hold.exp-Date.now();
+  if(left<=0){
+    state.sel=[];state.hold=null;state.pax=[];state.pending=false;
+    toast('Seat hold expired. Your seats were released.');
+    if(['seats','passengers','payment'].includes(state.view)){state.view='seats';render()}
+    return;
+  }
+  const el=$('#holdclock');if(el)el.textContent=mmss(left);
+},1000);
+
+$('#cities').innerHTML=CITIES.map(c=>`<option value="${c}"></option>`).join('');
+render();
+})();
+</script>
+
+</body>
+</html>
