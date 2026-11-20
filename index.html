@@ -37,6 +37,7 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{
   --accent:var(--train); --on-accent:var(--on-train);
   background:var(--bg); color:var(--ink); font:400 15px/1.5 var(--font-body);
@@ -227,6 +228,59 @@ th{font:600 11px var(--font-body);letter-spacing:.06em;text-transform:uppercase;
 .tripcard .head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:start}
 .cancelbox{border:1px solid var(--bad);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:10px}
 
+/* login box + register form */
+.modal.loginbox{padding:0;gap:0;position:relative;overflow:hidden;width:min(410px,100%)}
+.lclose{position:absolute;top:10px;right:12px;width:30px;height:30px;border:0;background:none;color:var(--ink);font-size:16px;cursor:pointer;border-radius:6px}
+.lbody{padding:30px 26px 16px;display:flex;flex-direction:column;gap:14px}
+.ltitle{text-align:center;font:700 26px var(--font-display);color:var(--train);letter-spacing:.03em}
+.ltitle span{display:inline-block;border-bottom:3px solid var(--train);padding-bottom:5px}
+.lf{border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.lf input{border:0;border-radius:0;background:transparent;padding:12px 0;font-weight:600;outline:none}
+.lf:focus-within{border-bottom-color:var(--train)}
+.eye{background:none;border:0;color:var(--muted);cursor:pointer;padding:4px;display:grid;place-items:center;flex:none;border-radius:6px}
+.eye:hover{color:var(--ink)}
+.forgot{background:none;border:0;padding:0;text-align:left;cursor:pointer;color:var(--train);font:700 12px var(--font-body);letter-spacing:.05em;text-transform:uppercase}
+.vi{display:flex;gap:10px;align-items:flex-start;font:600 13px/1.45 var(--font-body);cursor:pointer}
+.vi input{width:18px;height:18px;margin-top:2px;flex:none;accent-color:var(--train)}
+.signin{background:var(--bus);color:var(--on-bus);border:0;border-radius:10px;padding:14px;font:700 15px var(--font-body);letter-spacing:.07em;text-transform:uppercase;cursor:pointer}
+.signin:hover{filter:brightness(1.06)}
+.lfoot{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px 14px 14px;border-top:1px solid var(--line)}
+.lfoot button{background:var(--train);color:var(--on-train);border:0;border-radius:6px;padding:13px 8px;font:700 13px var(--font-body);letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.lfoot button:hover{filter:brightness(1.08)}
+.loginbox .demo{padding:0 26px 18px;border:0}
+.capwrap{display:flex;flex-direction:column;gap:2px}
+.capline{display:flex;align-items:center;gap:10px}
+.capcode{font:700 22px var(--font-mono);letter-spacing:.28em;padding:4px 14px;border-radius:6px;user-select:none;color:var(--ink);
+  background:repeating-linear-gradient(115deg,var(--soft) 0 6px,var(--surface) 6px 12px);text-decoration:line-through;text-decoration-color:var(--muted);font-style:italic}
+.regcard{max-width:860px;margin:6px auto 30px;box-shadow:var(--shadow);padding:26px}
+.reghead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px}
+.reghead h2{color:var(--train)}
+.faqbtn{border:1.5px solid var(--train);background:var(--surface);color:var(--train);border-radius:999px;padding:8px 18px;font:600 14px var(--font-body);cursor:pointer}
+.faq{border:1px solid var(--line);border-radius:10px;padding:12px 16px;background:var(--soft);margin-bottom:18px;font-size:14px}
+.faq li{margin-block:4px}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px 24px}
+.rfwrap{display:flex;flex-direction:column;gap:4px;min-width:0}
+.rf{position:relative;border:1px solid var(--line);border-radius:10px;padding:9px 14px;background:var(--surface);display:flex;flex-direction:column;min-width:0}
+.rf:focus-within{border-color:var(--train);box-shadow:0 0 0 3px color-mix(in srgb,var(--train) 20%,transparent)}
+.rf label{font:600 13px var(--font-body);color:var(--ink)}
+.rf input,.rf select{border:0;background:transparent;padding:3px 0;outline:none;border-radius:0}
+.rf input[readonly]{color:var(--muted)}
+.rf .eye{position:absolute;right:10px;top:50%;transform:translateY(-50%)}
+.rf.pw input{padding-right:34px}
+.rf.mob{flex-direction:row;gap:14px;align-items:stretch}
+.rf.mob .cc{display:flex;flex-direction:column;width:128px;flex:none;border-right:1px solid var(--line);padding-right:10px}
+.rf.mob .mn{display:flex;flex-direction:column;min-width:0;flex:1}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px 24px;list-style:none;padding:0;margin:16px 0 20px}
+.rules li{display:flex;gap:8px;align-items:flex-start;color:var(--bad);font-size:13px;line-height:1.4}
+.rules li.ok{color:var(--ok)}
+.rules .ri{font-weight:700;flex:none;width:12px}
+.verifybtn{border:0;background:var(--train);color:var(--on-train);border-radius:999px;padding:13px 26px;font:700 15px var(--font-body);cursor:pointer;display:inline-flex;gap:10px;align-items:center}
+.verifybtn:hover{filter:brightness(1.08)}
+.otpstage{margin-top:20px;border:1px dashed var(--train);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.otprow{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.otprow .rfwrap{width:220px;max-width:100%}
+.btn.train{background:var(--train);color:var(--on-train)}
+
 /* modal + toast */
 .overlay{position:fixed;inset:0;background:rgba(5,10,20,.6);display:grid;place-items:center;z-index:50;
   padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
@@ -247,7 +301,7 @@ th{font:600 11px var(--font-body);letter-spacing:.06em;text-transform:uppercase;
 }
 @media (prefers-reduced-motion:reduce){#toast{transition:none}}
 </style>
-<style>html{color-scheme:light}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<style>html{color-scheme:light}body{margin:0}img{max-width:100%}</style>
 </head>
 <body>
 
@@ -419,7 +473,7 @@ const state={
   payMethod:'upi',payOutcome:'success',payErr:'',pending:false,
   user:store.get('safar_user'),bookings:store.get('safar_bookings')||[],
   tripsTab:'upcoming',cancelId:null,booking:null,
-  modal:null,afterLogin:null
+  modal:null,afterLogin:null,reg:newReg(),cap:'',otpSent:false
 };
 const saveBookings=()=>store.set('safar_bookings',state.bookings);
 function mine(key){
@@ -443,7 +497,7 @@ function navHtml(){
   return `<button class="navbtn${v!=='trips'?' on':''}" data-act="mode" data-mode="train" data-testid="nav-train">Book a train</button>
   <button class="navbtn${v==='trips'?' on':''}" data-act="trips" data-testid="nav-trips">My trips</button>
   ${u?`<span class="who" data-testid="user-email">${esc(u.name||u.email)}</span><button class="navbtn" data-act="logout" data-testid="logout-btn">Log out</button>`
-     :`<button class="btn small" data-act="login-open" data-testid="login-btn">Log in</button>`}`;
+     :`<button class="navbtn" data-act="register-open" data-testid="register-nav">Register</button><button class="btn small" data-act="login-open" data-testid="login-btn">Log in</button>`}`;
 }
 const ROUTES=[['Chennai','Bengaluru'],['Chennai','Madurai'],['Bengaluru','Hyderabad'],['Coimbatore','Kochi'],['Chennai','Tirupati']];
 
@@ -703,42 +757,162 @@ function trips(){
   <div class="stack" style="margin-bottom:30px">${cards}</div>`;
 }
 
-/* ---------- modal (login) ---------- */
+/* ---------- accounts, login, register ---------- */
+const DEMO_OTP='123456';
+const accounts=()=>store.get('safar_accounts')||[];
+async function hashPw(s){
+  try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('safar|'+s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')}
+  catch(e){return 'x'+btoa(unescape(encodeURIComponent(s)))}
+}
+async function ensureDemo(){
+  try{
+    const a=accounts();
+    if(!a.some(x=>x.username==='safardemo')){
+      a.push({username:'safardemo',name:'Demo Traveller',email:'demo@safarseats.example',mobile:'9876543210',hash:await hashPw('Safar@Train47')});
+      store.set('safar_accounts',a);
+    }
+  }catch(e){}
+}
+function newReg(){return{username:'',name:'',pass:'',pass2:'',mobile:'',email:'',otp:'',err:{},otpStage:false,faq:false}}
+const EYE='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYEOFF='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.9 17.9A10.9 10.9 0 0 1 12 19C5 19 1 12 1 12a18.5 18.5 0 0 1 5.1-5.9M9.9 4.2A10.7 10.7 0 0 1 12 5c7 0 11 7 11 7a18.5 18.5 0 0 1-2.2 3.2M1 1l22 22"/><path d="M14.1 14.1a3 3 0 1 1-4.2-4.2"/></svg>';
+function newCaptchaCode(){
+  const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';
+  for(let i=0;i<5;i++)s+=c[Math.floor(Math.random()*c.length)];
+  state.cap=s;const el=$('#capcode');if(el)el.textContent=s;
+  const inp=$('#l-cap');if(inp)inp.value='';
+}
+
 function renderModal(){
   const m=state.modal,el=$('#modal');
   if(!m){el.innerHTML='';return}
-  const reg=m==='register';
-  el.innerHTML=`<div class="overlay" data-overlay="1"><form class="modal" id="lform" role="dialog" aria-modal="true" aria-labelledby="mt" novalidate data-testid="login-modal">
-    <h2 id="mt">${reg?'Create account':'Log in'}</h2>
-    <p class="muted small">One account for bus and train bookings.</p>
-    ${reg?`<div class="field"><label for="l-name">Name</label><input id="l-name" data-testid="login-name" autocomplete="name"></div>`:''}
-    <div class="field"><label for="l-email">Email</label><input id="l-email" data-testid="login-email" type="email" autocomplete="email"></div>
-    <div class="field"><label for="l-pass">Password</label><input id="l-pass" data-testid="login-password" type="password" autocomplete="${reg?'new-password':'current-password'}"></div>
-    <p class="err" id="l-err" role="alert" data-testid="login-error"></p>
-    <button class="btn" type="submit" data-testid="login-submit">${reg?'Create account':'Log in'}</button>
-    <button class="linkbtn" type="button" data-act="auth-switch" data-testid="auth-switch">${reg?'I already have an account':'Create a new account'}</button>
-    <button class="btn ghost" type="button" data-act="modal-close" data-testid="login-close">Close</button>
-    <p class="demo">Demo sign-in: any valid email and a password of 8 or more characters works. Swap this module for your Supergarden login.</p>
+  const agent=m==='agent';
+  state.otpSent=false;newCaptchaCode();
+  el.innerHTML=`<div class="overlay" data-overlay="1"><form class="modal loginbox" id="lform" role="dialog" aria-modal="true" aria-labelledby="mt" novalidate data-testid="login-modal">
+    <button type="button" class="lclose" data-act="modal-close" aria-label="Close" data-testid="login-close">✕</button>
+    <div class="lbody">
+      <h2 class="ltitle" id="mt"><span>${agent?'AGENT LOGIN':'LOGIN'}</span></h2>
+      <div class="lf"><input id="l-user" data-testid="login-username" placeholder="Enter User Name" aria-label="User Name" autocomplete="username"></div>
+      <div class="lf"><input id="l-pass" data-testid="login-password" type="password" placeholder="Enter Password" aria-label="Password" autocomplete="current-password"><button type="button" class="eye" data-act="eye" data-for="l-pass" aria-label="Show password" aria-pressed="false" data-testid="login-eye">${EYE}</button></div>
+      <button type="button" class="forgot" data-act="forgot" data-testid="forgot-link">Forgot account details?</button>
+      <label class="vi"><input type="checkbox" id="l-vi" data-vi="1" data-testid="login-otp-option"><span>Visually impaired users may select this option to receive OTP instead of CAPTCHA</span></label>
+      <div id="capbox" class="capwrap"><div class="capline"><span class="capcode" id="capcode" data-testid="captcha-code" aria-label="Captcha code">${state.cap}</span><button type="button" class="eye" data-act="cap-refresh" aria-label="New captcha" data-testid="captcha-refresh">↻</button></div><div class="lf"><input id="l-cap" data-testid="login-captcha" placeholder="Enter Captcha" aria-label="Captcha" autocomplete="off" maxlength="5"></div></div>
+      <div id="otpbox" class="capwrap" hidden><div class="lf"><input id="l-otp" data-testid="login-otp" placeholder="Enter OTP" aria-label="OTP" inputmode="numeric" maxlength="6" autocomplete="one-time-code"><button type="button" class="forgot" data-act="send-otp" data-testid="send-otp">Send OTP</button></div></div>
+      <p class="err" id="l-err" role="alert" data-testid="login-error"></p>
+      <button class="signin" type="submit" data-testid="login-submit">Sign in</button>
+    </div>
+    <div class="lfoot"><button type="button" data-act="register-open" data-testid="login-register">Register</button><button type="button" data-act="${agent?'login-open':'agent-open'}" data-testid="agent-login">${agent?'User login':'Agent login'}</button></div>
+    <p class="demo">Demo account: user name <b class="mono">safardemo</b>, password <b class="mono">Safar@Train47</b>. Accounts you register are saved only in this browser.</p>
   </form></div>`;
-  const first=reg?$('#l-name'):$('#l-email');first&&first.focus();
+  $('#l-user').focus();
 }
-function submitLogin(){
-  const reg=state.modal==='register';
-  const email=$('#l-email').value.trim(),pass=$('#l-pass').value,name=reg?$('#l-name').value.trim():'';
+async function submitLogin(){
   const err=m=>{$('#l-err').textContent=m};
-  if(reg&&name.length<2)return err('Enter your name.');
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email))return err('Enter a valid email address.');
-  if(pass.length<8)return err('Password must be at least 8 characters.');
-  state.user={email,name:name||email.split('@')[0]};
+  const u=$('#l-user').value.trim(),pw=$('#l-pass').value,viOtp=$('#l-vi').checked;
+  if(!u)return err('Enter your user name.');
+  if(!pw)return err('Enter your password.');
+  if(viOtp){
+    if(!state.otpSent)return err('Select Send OTP first.');
+    if($('#l-otp').value.trim()!==DEMO_OTP)return err('The OTP is incorrect. Check it and try again.');
+  }else if($('#l-cap').value.trim().toUpperCase()!==state.cap){
+    newCaptchaCode();return err('The captcha does not match. A new one is shown.');
+  }
+  const a=accounts().find(x=>x.username.toLowerCase()===u.toLowerCase()||x.email.toLowerCase()===u.toLowerCase());
+  if(!a||a.hash!==await hashPw(pw)){newCaptchaCode();return err('Invalid user name or password.')}
+  state.user={username:a.username,name:a.name,email:a.email,role:state.modal==='agent'?'agent':'user'};
   store.set('safar_user',state.user);
   state.modal=null;renderModal();
-  toast(`Signed in as ${state.user.email}`);
+  toast(`Signed in as ${a.username}`);
   const next=state.afterLogin;state.afterLogin=null;
-  if(next==='payment'){state.contact.email=state.contact.email||email;go('payment')}else render();
+  if(next==='payment'){state.contact.email=state.contact.email||a.email;go('payment')}else render();
+}
+
+const RULES=[['len','Minimum 11 to Maximum 15 characters'],['mix','One numeric digit and one special character (@#$%^&* etc.)'],['case','At least one small and one capital alphabet.'],['seq','No sequence/repeated characters like 123, 000, 111, abc, aaa etc.']];
+function hasSeq(s){
+  const t=s.toLowerCase();
+  for(let i=0;i<t.length-2;i++){
+    const a=t.charCodeAt(i),b=t.charCodeAt(i+1),c=t.charCodeAt(i+2);
+    if((b-a===1&&c-b===1)||(a-b===1&&b-c===1)||(a===b&&b===c))return true;
+  }
+  return false;
+}
+function ruleState(p){
+  return{len:p.length>=11&&p.length<=15,mix:/\d/.test(p)&&/[^A-Za-z0-9]/.test(p),case:/[a-z]/.test(p)&&/[A-Z]/.test(p),seq:p.length>0&&!hasSeq(p)};
+}
+function updateRules(){
+  const rs=ruleState(state.reg.pass);
+  RULES.forEach(([k])=>{
+    const li=$('#rule-'+k);if(!li)return;
+    li.classList.toggle('ok',rs[k]);
+    li.querySelector('.ri').textContent=rs[k]?'✓':'✕';
+  });
+}
+function register(){
+  const r=state.reg,e=r.err||{},rs=ruleState(r.pass),ro=r.otpStage?' readonly':'';
+  const bad=k=>e[k]?` aria-invalid="true" aria-describedby="re-${k}"`:'';
+  const msg=k=>e[k]?`<span class="err" id="re-${k}" data-testid="err-${k}">${esc(e[k])}</span>`:'';
+  const txt=(k,label,ph,type,ac)=>`<div class="rfwrap"><div class="rf"><label for="r-${k}">${label}</label><input id="r-${k}" data-testid="reg-${k}" data-r="${k}" type="${type||'text'}" placeholder="${ph}" value="${esc(r[k])}" autocomplete="${ac||'off'}"${bad(k)}${ro}></div>${msg(k)}</div>`;
+  const pw=(k,label,ph)=>`<div class="rfwrap"><div class="rf pw"><label for="r-${k}">${label}</label><input id="r-${k}" data-testid="reg-${k}" data-r="${k}" type="password" placeholder="${ph}" value="${esc(r[k])}" autocomplete="new-password"${bad(k)}${ro}><button type="button" class="eye" data-act="eye" data-for="r-${k}" aria-label="Show ${label}" aria-pressed="false" data-testid="reg-eye-${k}">${EYEOFF}</button></div>${msg(k)}</div>`;
+  const faq=r.faq?`<ul class="faq" data-testid="faq">
+    <li>Your user name must be unique. It is what you type on the Log in screen.</li>
+    <li>Enter your name exactly as on your government ID. It must match the ID you carry while travelling.</li>
+    <li>You will get a one-time password on your mobile and email to verify them before the account is created.</li>
+    <li>In this demo no SMS or email is sent. Use the OTP shown on screen.</li></ul>`:'';
+  const otp=r.otpStage?`<div class="otpstage" data-testid="otp-stage">
+    <p>We have sent a 6-digit OTP to +91 ${esc(r.mobile.slice(0,2))}XXXXXX${esc(r.mobile.slice(-2))} and ${esc(r.email)}.</p>
+    <p class="muted small">Demo only: no SMS or email is sent. Enter <b class="mono">${DEMO_OTP}</b>.</p>
+    <div class="otprow"><div class="rfwrap"><div class="rf"><label for="r-otp">Enter OTP</label><input id="r-otp" data-testid="reg-otp" data-r="otp" inputmode="numeric" maxlength="6" placeholder="Enter OTP" value="${esc(r.otp)}" autocomplete="one-time-code"${bad('otp')}></div>${msg('otp')}</div>
+    <button class="btn train" data-act="reg-confirm" data-testid="reg-confirm">Confirm and create account</button></div></div>`:'';
+  return `<div class="crumb"><button class="linkbtn" data-act="home" data-testid="reg-back">← Back to home</button></div>
+  <section class="panel regcard" data-testid="register-form">
+    <div class="reghead"><h2>Enter Details to Register</h2><button type="button" class="faqbtn" data-act="reg-faq" aria-expanded="${r.faq}" data-testid="read-faq">? &nbsp;Read FAQ</button></div>
+    ${faq}
+    <div class="rgrid">
+      ${txt('username','Username','Enter Username','text','username')}
+      ${txt('name','Full Name as per Govt. ID','Enter full name','text','name')}
+      ${pw('pass','Password','Enter password')}
+      ${pw('pass2','Confirm Password','Enter password')}
+    </div>
+    <ul class="rules" data-testid="pw-rules">${RULES.map(([k,t])=>`<li id="rule-${k}" class="${rs[k]?'ok':''}" data-testid="rule-${k}"><span class="ri" aria-hidden="true">${rs[k]?'✓':'✕'}</span><span>${t}</span></li>`).join('')}</ul>
+    <div class="rgrid">
+      <div class="rfwrap"><div class="rf mob"><div class="cc"><label for="r-cc">Country</label><select id="r-cc" data-testid="reg-cc" disabled><option>+91 - India</option></select></div><div class="mn"><label for="r-mobile">Mobile Number</label><input id="r-mobile" data-testid="reg-mobile" data-r="mobile" inputmode="numeric" maxlength="10" placeholder="Enter mobile number" value="${esc(r.mobile)}" autocomplete="tel-national"${bad('mobile')}${ro}></div></div>${msg('mobile')}</div>
+      ${txt('email','Email','Enter email address','email','email')}
+    </div>
+    <div style="margin-top:22px"><button type="button" class="verifybtn" data-act="${r.otpStage?'reg-edit':'reg-verify'}" data-testid="verify-btn"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M13 8l4 4-4 4" stroke-linecap="round" stroke-linejoin="round"/></svg>${r.otpStage?'Edit details':'Verify'}</button></div>
+    ${otp}
+  </section>`;
+}
+function regVerify(){
+  const r=state.reg,e={},un=r.username.trim(),ac=accounts();
+  if(!/^[A-Za-z][A-Za-z0-9._]{3,19}$/.test(un))e.username='Use 4 to 20 characters. Start with a letter. Letters, digits, dot and underscore only.';
+  else if(ac.some(a=>a.username.toLowerCase()===un.toLowerCase()))e.username='This username is already taken. Try another.';
+  if(!/^[A-Za-z][A-Za-z .'-]{2,59}$/.test(r.name.trim()))e.name='Enter your full name as on your government ID, using letters only.';
+  if(!Object.values(ruleState(r.pass)).every(Boolean))e.pass='The password does not meet all the rules below.';
+  if(!r.pass2||r.pass2!==r.pass)e.pass2='Password and Confirm Password do not match.';
+  if(!/^[6-9]\d{9}$/.test(r.mobile.trim()))e.mobile='Enter a 10-digit mobile number starting with 6 to 9.';
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(r.email.trim()))e.email='Enter a valid email address.';
+  else if(ac.some(a=>a.email.toLowerCase()===r.email.trim().toLowerCase()))e.email='An account with this email already exists.';
+  r.err=e;
+  if(Object.keys(e).length){render();const bad=document.querySelector('#app [aria-invalid="true"]');if(bad)bad.focus();return}
+  r.otpStage=true;r.otp='';render();
+  const o=$('#r-otp');if(o)o.focus();
+}
+async function regConfirm(){
+  const r=state.reg;
+  if(r.otp.trim()!==DEMO_OTP){r.err.otp='The OTP is incorrect. Check it and try again.';render();const o=$('#r-otp');if(o)o.focus();return}
+  const ac=accounts(),un=r.username.trim();
+  if(ac.some(a=>a.username.toLowerCase()===un.toLowerCase())){r.otpStage=false;r.err={username:'This username is already taken. Try another.'};render();return}
+  ac.push({username:un,name:r.name.trim(),email:r.email.trim(),mobile:r.mobile.trim(),hash:await hashPw(r.pass)});
+  store.set('safar_accounts',ac);
+  state.reg=newReg();
+  toast('Account created. Log in to continue.');
+  state.modal='login';go('home');renderModal();
+  const lu=$('#l-user');if(lu)lu.value=un;
+  const lp=$('#l-pass');if(lp)lp.focus();
 }
 
 /* ---------- rendering ---------- */
-const VIEWS={home,results,seats,passengers,payment,ticket,trips};
+const VIEWS={home,results,seats,passengers,payment,ticket,trips,register};
 function render(){
   const ae=document.activeElement;
   const keep=ae&&ae.dataset&&ae.dataset.id?ae.dataset.id:null;
@@ -891,7 +1065,16 @@ document.addEventListener('click',e=>{
       if(b){const r=refundInfo(b);b.status='CANCELLED';b.refund=r.amount;saveBookings();toast(`Booking cancelled. Refund of ${inr(r.amount)} initiated.`)}
       state.cancelId=null;state.tripsTab='cancelled';render();break}
     case'login-open':state.modal='login';renderModal();break;
-    case'auth-switch':state.modal=state.modal==='login'?'register':'login';renderModal();break;
+    case'agent-open':state.modal='agent';renderModal();break;
+    case'register-open':state.modal=null;renderModal();state.reg=newReg();go('register');break;
+    case'eye':{const i=document.getElementById(d.for);if(i){const show=i.type==='password';i.type=show?'text':'password';el.setAttribute('aria-pressed',String(show));el.innerHTML=show?EYE:EYEOFF;if(d.for==='l-pass')el.innerHTML=show?EYEOFF:EYE;el.setAttribute('aria-label',(show?'Hide ':'Show ')+(d.for==='l-pass'?'password':'password'))}break}
+    case'cap-refresh':newCaptchaCode();break;
+    case'forgot':toast('Account recovery is not available in this demo. Use the demo account or register a new one.');break;
+    case'send-otp':{const u=$('#l-user').value.trim();if(!u){$('#l-err').textContent='Enter your user name first.';break}state.otpSent=true;$('#l-err').textContent='';toast(`Demo OTP: ${DEMO_OTP}. No SMS is sent in this demo.`);break}
+    case'reg-verify':regVerify();break;
+    case'reg-confirm':regConfirm();break;
+    case'reg-edit':state.reg.otpStage=false;state.reg.err={};render();break;
+    case'reg-faq':state.reg.faq=!state.reg.faq;render();break;
     case'modal-close':state.modal=null;state.afterLogin=null;renderModal();break;
     case'logout':state.user=null;store.del('safar_user');state.contact.email='';toast('Logged out.');if(state.view==='payment')state.view='passengers';render();break;
   }
@@ -902,6 +1085,16 @@ document.addEventListener('submit',e=>{
 });
 function onField(e){
   const el=e.target,d=el.dataset;if(!d)return;
+  if(d.vi){const on=el.checked;$('#capbox').hidden=on;$('#otpbox').hidden=!on;$('#l-err').textContent='';return}
+  if(d.r){
+    const r=state.reg;
+    if(d.r==='mobile'){const v=el.value.replace(/\D/g,'');if(v!==el.value)el.value=v}
+    if(d.r==='otp'){const v=el.value.replace(/\D/g,'');if(v!==el.value)el.value=v}
+    r[d.r]=el.value;
+    if(r.err&&r.err[d.r]){delete r.err[d.r];const x=document.getElementById('re-'+d.r);if(x)x.remove();el.removeAttribute('aria-invalid')}
+    if(d.r==='pass')updateRules();
+    return;
+  }
   if(d.s){const s=state.search;s[d.s]=d.s==='pax'?Number(el.value):el.value;return}
   if(d.p){const p=state.pax[Number(d.i)];if(p)p[d.p]=el.value;return}
   if(d.c){state.contact[d.c]=el.value;return}
@@ -927,6 +1120,7 @@ setInterval(()=>{
   const el=$('#holdclock');if(el)el.textContent=mmss(left);
 },1000);
 
+ensureDemo();
 $('#cities').innerHTML=CITIES.map(c=>`<option value="${c}"></option>`).join('');
 render();
 })();
