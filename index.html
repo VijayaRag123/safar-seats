@@ -106,7 +106,9 @@ h1{font-size:clamp(30px,4.6vw,46px);line-height:1.08;letter-spacing:-.025em}
 .tab[aria-selected="true"]{background:var(--surface);color:var(--accent);box-shadow:0 1px 2px rgba(0,0,0,.12)}
 .route-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:end}
 .swap{height:42px;width:38px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;cursor:pointer;font-size:16px}
-.row2{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.row2 .field.date{grid-column:1 / -1}
+.field input[type="date"]{min-width:0;padding-inline:12px;font-variant-numeric:tabular-nums}
 .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px;padding-block:18px}
 .fact{border-top:2px solid var(--accent);padding-top:10px}
 .fact h3{margin-bottom:4px}
@@ -495,7 +497,6 @@ function fare(){
 function navHtml(){
   const u=state.user,v=state.view;
   return `<button class="navbtn${v!=='trips'?' on':''}" data-act="mode" data-mode="train" data-testid="nav-train">Book a train</button>
-  <button class="navbtn${v==='trips'?' on':''}" data-act="trips" data-testid="nav-trips">My trips</button>
   ${u?`<span class="who" data-testid="user-email">${esc(u.name||u.email)}</span><button class="navbtn" data-act="logout" data-testid="logout-btn">Log out</button>`
      :`<button class="navbtn" data-act="register-open" data-testid="register-nav">Register</button><button class="btn small" data-act="login-open" data-testid="login-btn">Log in</button>`}`;
 }
@@ -511,7 +512,7 @@ function searchCard(){
       <div class="field"><label for="search-to">To</label><input id="search-to" data-testid="search-to" list="cities" autocomplete="off" value="${esc(s.to)}" data-s="to"></div>
     </div>
     <div class="row2">
-      <div class="field"><label for="search-date">Date</label><input id="search-date" data-testid="search-date" type="date" min="${todayStr()}" value="${esc(s.date)}" data-s="date"></div>
+      <div class="field date"><label for="search-date">Date</label><input id="search-date" data-testid="search-date" type="date" min="${todayStr()}" value="${esc(s.date)}" data-s="date"></div>
       <div class="field"><label for="search-pax">Passengers</label><select id="search-pax" data-testid="search-pax" data-s="pax">${[1,2,3,4,5,6].map(n=>`<option value="${n}"${n===s.pax?' selected':''}>${n}</option>`).join('')}</select></div>
       ${b?'':`<div class="field"><label for="search-class">Class</label><select id="search-class" data-testid="search-class" data-s="cls"><option value="ALL"${s.cls==='ALL'?' selected':''}>All classes</option>${['SL','3A','2A','1A','CC'].map(c=>`<option value="${c}"${s.cls===c?' selected':''}>${c} · ${CLSNAME[c]}</option>`).join('')}</select></div>`}
     </div>
@@ -727,7 +728,7 @@ function ticket(){
     <div class="line total"><span>Total paid</span><span>${inr(b.total)}</span></div>
   </div><div class="stub"><p class="lbl">PNR</p><p class="pnr" data-testid="pnr">${b.pnr}</p><p class="lbl" style="margin-top:10px">Status</p><p><span class="status ${ok?'ok':'warn'}">${stText(b.status)}</span></p></div></article>
   <p class="note">Demo ticket generated from sample data. It is not valid for travel.</p>
-  <div class="actions"><button class="btn" data-act="trips" data-testid="view-trips">View my trips</button><button class="btn ghost" data-act="new-search">Book another trip</button></div>`;
+  <div class="actions"><button class="btn ghost" data-act="new-search">Book another trip</button></div>`;
 }
 
 function refundInfo(b){
