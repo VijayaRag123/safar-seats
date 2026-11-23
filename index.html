@@ -497,7 +497,7 @@ function fare(){
 function navHtml(){
   const u=state.user,v=state.view;
   return `<button class="navbtn${v!=='trips'?' on':''}" data-act="mode" data-mode="train" data-testid="nav-train">Book a train</button>
-  ${u?`<span class="who" data-testid="user-email">${esc(u.name||u.email)}</span><button class="navbtn" data-act="logout" data-testid="logout-btn">Log out</button>`
+  ${u?`<button class="navbtn${v==='trips'?' on':''}" data-act="trips" data-testid="nav-trips"${v==='trips'?' aria-current="page"':''}>My trips</button><span class="who" data-testid="user-email">${esc(u.name||u.email)}</span><button class="navbtn" data-act="logout" data-testid="logout-btn">Log out</button>`
      :`<button class="navbtn" data-act="register-open" data-testid="register-nav">Register</button><button class="btn small" data-act="login-open" data-testid="login-btn">Log in</button>`}`;
 }
 const ROUTES=[['Chennai','Bengaluru'],['Chennai','Madurai'],['Bengaluru','Hyderabad'],['Coimbatore','Kochi'],['Chennai','Tirupati']];
@@ -553,7 +553,7 @@ function results(){
     list.sort(sorters[f.sort]);
     body=list.map(busCard).join('')||`<div class="empty panel">No buses match these filters.</div>`;
   }else{
-    body=list.map(trainCard).join('')||`<div class="empty panel">No trains found for this search.</div>`;
+    body=list.map(trainCard).join('')||`<div class="empty panel" data-testid="no-trains">${state.allDeparted?'All trains for today have already departed. Try a later date.':'No trains found for this search.'}</div>`;
   }
   const chips=[['all','All'],['ac','AC'],['nonac','Non-AC'],['sleeper','Sleeper'],['seater','Seater']];
   const filters=b?`<div class="filters" role="group" aria-label="Filter buses">${chips.map(c=>`<button class="chip" aria-pressed="${state.filter.type===c[0]}" data-act="filter" data-v="${c[0]}" data-testid="filter-${c[0]}">${c[1]}</button>`).join('')}
@@ -728,7 +728,7 @@ function ticket(){
     <div class="line total"><span>Total paid</span><span>${inr(b.total)}</span></div>
   </div><div class="stub"><p class="lbl">PNR</p><p class="pnr" data-testid="pnr">${b.pnr}</p><p class="lbl" style="margin-top:10px">Status</p><p><span class="status ${ok?'ok':'warn'}">${stText(b.status)}</span></p></div></article>
   <p class="note">Demo ticket generated from sample data. It is not valid for travel.</p>
-  <div class="actions"><button class="btn ghost" data-act="new-search">Book another trip</button></div>`;
+  <div class="actions"><button class="btn" data-act="trips" data-testid="view-trips">View my trips</button><button class="btn ghost" data-act="new-search">Book another trip</button></div>`;
 }
 
 function refundInfo(b){
@@ -940,7 +940,11 @@ function doSearch(){
   state.searchErr=e;
   if(e){render();return}
   s.from=f;s.to=t;
-  state.results=state.mode==='bus'?genBuses(f,t,s.date):genTrains(f,t,s.date);
+  const all=state.mode==='bus'?genBuses(f,t,s.date):genTrains(f,t,s.date);
+  /* hide trips that have already departed (only matters when searching today) */
+  const now=Date.now();
+  state.results=all.filter(x=>depTs(x.date,x.dep)>now);
+  state.allDeparted=all.length>0&&state.results.length===0;
   state.filter={type:'all',sort:'dep'};
   go('results');
 }
