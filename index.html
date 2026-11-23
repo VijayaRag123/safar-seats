@@ -890,6 +890,7 @@ function regVerify(){
   if(!Object.values(ruleState(r.pass)).every(Boolean))e.pass='The password does not meet all the rules below.';
   if(!r.pass2||r.pass2!==r.pass)e.pass2='Password and Confirm Password do not match.';
   if(!/^[6-9]\d{9}$/.test(r.mobile.trim()))e.mobile='Enter a 10-digit mobile number starting with 6 to 9.';
+  else if(ac.some(a=>a.mobile===r.mobile.trim()))e.mobile='An account with this mobile number already exists.';
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(r.email.trim()))e.email='Enter a valid email address.';
   else if(ac.some(a=>a.email.toLowerCase()===r.email.trim().toLowerCase()))e.email='An account with this email already exists.';
   r.err=e;
@@ -902,6 +903,7 @@ async function regConfirm(){
   if(r.otp.trim()!==DEMO_OTP){r.err.otp='The OTP is incorrect. Check it and try again.';render();const o=$('#r-otp');if(o)o.focus();return}
   const ac=accounts(),un=r.username.trim();
   if(ac.some(a=>a.username.toLowerCase()===un.toLowerCase())){r.otpStage=false;r.err={username:'This username is already taken. Try another.'};render();return}
+  if(ac.some(a=>a.mobile===r.mobile.trim())){r.otpStage=false;r.err={mobile:'An account with this mobile number already exists.'};render();return}
   ac.push({username:un,name:r.name.trim(),email:r.email.trim(),mobile:r.mobile.trim(),hash:await hashPw(r.pass)});
   store.set('safar_accounts',ac);
   state.reg=newReg();
