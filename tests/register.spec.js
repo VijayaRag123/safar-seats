@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const appUrl = 'https://vijayarag123.github.io/safar-seats/';
+const appUrl = './';
 const validPassword = 'Rider@Train8X';
 
 function registrationDetails() {
@@ -78,32 +78,10 @@ test('shows a clear error when registering with an existing mobile number', asyn
   await page.getByRole('button', { name: 'Register', exact: true }).click();
   await fillRegistrationDetails(page, duplicate);
 
-  // Static demos may not return a matching API request. Capture it when one exists,
-  // without making that infrastructure detail hide the UI validation result.
-  let response;
-  try {
-    [response] = await Promise.all([
-      page.waitForResponse(
-        r => r.request().method() === 'POST' && /otp|register|verify|signup/i.test(r.url()),
-        { timeout: 15000 }
-      ),
-      page.getByRole('button', { name: 'Verify' }).click(),
-    ]);
+  // This is a static site: there is no registration API, so the check is purely in the UI.
+  await page.getByRole('button', { name: 'Verify' }).click();
 
-    console.log('API:', response.url(), response.status(), await response.text());
-  } catch {
-    console.log('API: no matching POST response; validating the registration UI.');
-  }
-
-  // Looser wording match + longer timeout; scoped to alert/toast first, then falls back to any text
-  const errorMsg = page
-    .getByRole('alert')
-    .filter({ hasText: /mobile|number|already|exists|registered|in use/i })
-    .or(page.getByText(/already\s+(exists|registered|in use)/i))
-    .first();
-
-  await expect(errorMsg).toBeVisible({ timeout: 10000 });
-  await expect(errorMsg).toContainText(/mobile|number|exists|registered/i);
+  await expect(page.getByText('An account with this mobile number already exists.')).toBeVisible();
   await expect(page.getByRole('textbox', { name: 'Enter OTP' })).toHaveCount(0);
 });
 

@@ -1,6 +1,12 @@
 import { test, expect } from '@playwright/test';
+import { freezeClock } from './helpers.js';
 
-const appUrl = 'https://vijayarag123.github.io/safar-seats/';
+const appUrl = './';
+
+// Results and availability are generated from the date, so every test starts on the same day.
+test.beforeEach(async ({ page }) => {
+  await freezeClock(page);
+});
 
 async function searchTrains(page, { from = 'Chennai', to = 'Bengaluru' } = {}) {
   await page.goto(appUrl);
@@ -44,11 +50,12 @@ test('class selection shows its fare and availability', async ({ page }) => {
     await expect(classOption).toContainText(/(Available \d+|RAC \d+|WL \d+)/);
   }
 
-  const threeATrain = page.getByRole('button', { name: /^3A ₹/ }).first();
+  // Only a class with seats available opens the seat map (RAC and WL go straight to passenger details).
+  const threeATrain = page.getByRole('button', { name: /^3A ₹.*Available \d+/ }).first();
+  await expect(threeATrain).toBeVisible();
   const trainClassAndFare = await threeATrain.innerText();
   const fare = trainClassAndFare.match(/₹[\d,]+/)?.[0];
   expect(fare).toBeTruthy();
-  expect(trainClassAndFare).toMatch(/(Available \d+|RAC \d+|WL \d+)/);
 
   await threeATrain.click();
   await expect(page.getByRole('heading', { name: /Choose seats in/ })).toBeVisible();
@@ -84,7 +91,17 @@ test('displays Regret when a class has no bookable or waitlist availability', as
 test('saves the selected berth preference with the passenger', async ({ page }) => {
   await openAvailableSleeperSeats(page);
 
-  await page.locator('select').selectOption('LB');
+  // The preference is applied by Auto-assign, so choose LB and let the app assign the berth.
+  await page.getByLabel('Berth preference').selectOption('LB');
+  await page.getByRole('button', { name: /Auto-assign 1 berth/ }).click();
+  await page.getByRole('button', { name: /Continue with 1 seat/ }).click();
+
+  await expect(page.getByRole('group')).toContainText(/Passenger 1 · S\d+\/\d+ LB/);
+});
+
+test('picking a lower berth by hand is saved with the passenger', async ({ page }) => {
+  await openAvailableSleeperSeats(page);
+
   const lowerBerth = page.locator(
     'button[data-act="seat"]:not([disabled])[aria-label*="Lower berth"]',
   ).first();
@@ -97,7 +114,7 @@ test('saves the selected berth preference with the passenger', async ({ page }) 
 test('auto-assigns a berth when no berth preference is selected', async ({ page }) => {
   await openAvailableSleeperSeats(page);
 
-  const preference = page.locator('select');
+  const preference = page.getByLabel('Berth preference');
   await expect(preference).toHaveValue('Any');
   await page.getByRole('button', { name: /Auto-assign 1 berth/ }).click();
   await expect(page.getByRole('button', { name: /Continue with 1 seat/ })).toBeEnabled();

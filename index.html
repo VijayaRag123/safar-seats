@@ -10,20 +10,20 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
 /* Layout: ticket-counter board. Slim top bar, a pitch beside the search card, then step views as white panels.
-   Seat maps sit left with a sticky fare summary right. Accent flips between bus orange and train blue. */
+   Seat maps sit left with a sticky fare summary right. Train blue is the accent; orange is only the sign-in button. */
 :root{
   --font-display:'Space Grotesk',system-ui,sans-serif;
   --font-body:'Inter',system-ui,sans-serif;
   --font-mono:'IBM Plex Mono',ui-monospace,monospace;
   --bg:#EBEEF3; --surface:#FFFFFF; --soft:#F4F6FA; --ink:#0E1A2B; --muted:#586376; --line:#D3DAE5;
-  --bus:#C2410C; --on-bus:#FFFFFF; --train:#1D4ED8; --on-train:#FFFFFF;
+  --warm:#C2410C; --on-warm:#FFFFFF; --train:#1D4ED8; --on-train:#FFFFFF;
   --ok:#15803D; --warn:#A16207; --bad:#B42318; --ladies:#BE185D; --booked:#E2E6EE;
   --shadow:0 1px 2px rgba(14,26,43,.06),0 8px 24px rgba(14,26,43,.07);
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#0A111D; --surface:#121B2C; --soft:#0F1726; --ink:#E7ECF5; --muted:#98A4B8; --line:#25314A;
-    --bus:#FB923C; --on-bus:#1A0E04; --train:#7FA6FF; --on-train:#07122B;
+    --warm:#FB923C; --on-warm:#1A0E04; --train:#7FA6FF; --on-train:#07122B;
     --ok:#4ADE80; --warn:#FBBF24; --bad:#F87171; --ladies:#F472B6; --booked:#1B2538;
     --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
     color-scheme:dark;
@@ -31,7 +31,7 @@
 }
 :root[data-theme="dark"]{
   --bg:#0A111D; --surface:#121B2C; --soft:#0F1726; --ink:#E7ECF5; --muted:#98A4B8; --line:#25314A;
-  --bus:#FB923C; --on-bus:#1A0E04; --train:#7FA6FF; --on-train:#07122B;
+  --warm:#FB923C; --on-warm:#1A0E04; --train:#7FA6FF; --on-train:#07122B;
   --ok:#4ADE80; --warn:#FBBF24; --bad:#F87171; --ladies:#F472B6; --booked:#1B2538;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
   color-scheme:dark;
@@ -44,7 +44,6 @@ body{
   padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px));
   padding-block:0; min-height:100%;
 }
-body[data-mode="train"]{--accent:var(--train); --on-accent:var(--on-train)}
 .wrap{max-width:1080px;margin:0 auto}
 h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance}
 h2{font-size:20px;letter-spacing:-.01em}
@@ -117,8 +116,6 @@ h1{font-size:clamp(30px,4.6vw,46px);line-height:1.08;letter-spacing:-.025em}
 
 /* results */
 .sumbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
-.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-block:14px}
-.filters select{width:auto}
 .list{display:flex;flex-direction:column;gap:10px;margin-bottom:30px}
 .trip{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.5fr) auto;gap:16px;align-items:center;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
 .trip h3{overflow-wrap:anywhere}
@@ -160,7 +157,6 @@ h1{font-size:clamp(30px,4.6vw,46px);line-height:1.08;letter-spacing:-.025em}
 .pair{display:flex;gap:6px}
 .aisle{width:22px}
 .seat{width:36px;height:36px;border-radius:7px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:600 11px var(--font-mono);cursor:pointer;display:grid;place-items:center;padding:0}
-.seat.sleeper{height:62px;width:38px}
 .seat:hover:not(:disabled){border-color:var(--accent)}
 .seat.ladies{border-color:var(--ladies)}
 .seat.sel{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
@@ -264,7 +260,7 @@ th{font:600 11px var(--font-body);letter-spacing:.06em;text-transform:uppercase;
 .forgot{background:none;border:0;padding:0;text-align:left;cursor:pointer;color:var(--train);font:700 12px var(--font-body);letter-spacing:.05em;text-transform:uppercase}
 .vi{display:flex;gap:10px;align-items:flex-start;font:600 13px/1.45 var(--font-body);cursor:pointer}
 .vi input{width:18px;height:18px;margin-top:2px;flex:none;accent-color:var(--train)}
-.signin{background:var(--bus);color:var(--on-bus);border:0;border-radius:10px;padding:14px;font:700 15px var(--font-body);letter-spacing:.07em;text-transform:uppercase;cursor:pointer}
+.signin{background:var(--warm);color:var(--on-warm);border:0;border-radius:10px;padding:14px;font:700 15px var(--font-body);letter-spacing:.07em;text-transform:uppercase;cursor:pointer}
 .signin:hover{filter:brightness(1.06)}
 .lfoot{display:grid;grid-template-columns:1fr;gap:10px;padding:10px 14px 14px;border-top:1px solid var(--line)}
 .lfoot button{background:var(--train);color:var(--on-train);border:0;border-radius:6px;padding:13px 8px;font:700 13px var(--font-body);letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
@@ -380,41 +376,6 @@ const dur=m=>`${Math.floor(m/60)}h ${pad(m%60)}m`;
 const depTs=(date,min)=>{const d=new Date(date+'T00:00:00');d.setMinutes(min);return d.getTime()};
 const mmss=ms=>{const s=Math.max(0,Math.ceil(ms/1000));return `${pad(Math.floor(s/60))}:${pad(s%60)}`};
 
-/* ---------- sample data: buses ---------- */
-const OPS=['Kaveri Lines','Nilgiri Express','Marina Travels','Sahyadri Coaches','Coromandel Tours','Vaigai Travels','Palar Express','Anaimalai Lines'];
-const BTYPES=[
-  {n:'AC Sleeper (2+1)',ac:true,sl:true,f:150},
-  {n:'Non-AC Sleeper (2+1)',ac:false,sl:true,f:105},
-  {n:'AC Seater (2+2)',ac:true,sl:false,f:115},
-  {n:'Non-AC Seater (2+2)',ac:false,sl:false,f:78}
-];
-const BSLOTS=[330,480,780,1050,1185,1260,1290,1335,1380];
-function genBuses(from,to,date){
-  const r=seed(`bus|${from}|${to}|${date}`), base=routeMin(from,to), out=[];
-  for(let i=0;i<9;i++){
-    const t=BTYPES[Math.floor(r()*4)];
-    const d=Math.round((base+(r()*60-30))/5)*5;
-    const dep=BSLOTS[i];
-    out.push({
-      kind:'bus',key:`bus|${from}|${to}|${date}|${i}`,from,to,date,
-      op:OPS[(i+Math.floor(r()*8))%8],type:t,dep,dur:d,
-      rating:(3.6+r()*1.3).toFixed(1),
-      price:Math.max(250,Math.round(d/60*t.f/10)*10),
-      board:[{n:`${from} Bus Stand`,t:dep},{n:`${from} Bypass Junction`,t:dep+25},{n:`${from} Toll Plaza`,t:dep+40}],
-      drop:[{n:`${to} Toll Plaza`,t:dep+d-35},{n:`${to} Bypass Junction`,t:dep+d-15},{n:`${to} Bus Stand`,t:dep+d}]
-    });
-  }
-  return out;
-}
-function busSeats(bus){
-  if(bus._seats)return bus._seats;
-  const r=seed(bus.key+'|seats'), occ=.25+seed(bus.key+'|occ')()*.35, list=[];
-  const add=(id,sleeper)=>{const booked=r()<occ;const ladies=!booked&&r()<.1;list.push({id,label:id,booked,ladies,sleeper})};
-  if(bus.type.sl){for(const dk of ['L','U'])for(let rw=1;rw<=6;rw++)for(const c of ['A','B','C'])add(dk+rw+c,true)}
-  else{for(let rw=1;rw<=10;rw++)for(const c of ['A','B','C','D'])add(rw+c,false)}
-  bus._seats=list;return list;
-}
-
 /* ---------- sample data: trains ---------- */
 const TNAMES=['Nilgiri Superfast','Coastal Express','Deccan Intercity','Southern Mail','Vaigai Link','Sahyadri Express'];
 const CLSNAME={SL:'Sleeper','3A':'AC 3 Tier','2A':'AC 2 Tier','1A':'AC First',CC:'AC Chair Car'};
@@ -489,11 +450,11 @@ function classInfo(t,ci){
 
 /* ---------- state ---------- */
 const state={
-  mode:'train',view:'home',
+  view:'home',
   search:{from:'Chennai',to:'Bengaluru',date:addDays(1),pax:1,cls:'ALL'},searchErr:'',
-  results:[],filter:{type:'all',sort:'dep'},
+  results:[],
   trip:null,cls:null,coach:0,sel:[],hold:null,noSeat:false,waitStatus:'',pref:'Any',
-  pax:[],contact:{mobile:'',email:''},board:0,drop:2,errors:{},
+  pax:[],contact:{mobile:'',email:''},errors:{},
   payMethod:'upi',payOutcome:'success',payErr:'',pending:false,
   user:store.get('safar_user'),bookings:store.get('safar_bookings')||[],
   tripsTab:'upcoming',cancelId:null,booking:null,rs:null,allDeparted:false,
@@ -505,12 +466,11 @@ function mine(key){
   state.bookings.forEach(b=>{if(b.tripKey===key&&b.status!=='CANCELLED')b.pax.forEach(p=>p.seat&&s.add(p.seat))});
   return s;
 }
-const busLeft=b=>{const m=mine(b.key);return busSeats(b).filter(s=>!s.booked&&!m.has(s.id)).length};
 const classOf=t=>t.classes.find(c=>c.cls===state.cls);
 function paxCount(){return state.noSeat?state.search.pax:state.sel.length}
 function fare(){
   const t=state.trip,n=paxCount();
-  const unit=t.kind==='bus'?t.price:classOf(t).fare;
+  const unit=classOf(t).fare;
   const base=unit*n,fee=FEE*n;
   return{unit,n,base,fee,total:base+fee};
 }
@@ -518,14 +478,14 @@ function fare(){
 /* ---------- views ---------- */
 function navHtml(){
   const u=state.user,v=state.view;
-  return `<button class="navbtn${v!=='trips'?' on':''}" data-act="mode" data-mode="train" data-testid="nav-train">Book a train</button>
+  return `<button class="navbtn${v!=='trips'?' on':''}" data-act="home" data-testid="nav-train">Book a train</button>
   ${u?`<button class="navbtn${v==='trips'?' on':''}" data-act="trips" data-testid="nav-trips"${v==='trips'?' aria-current="page"':''}>My trips</button><span class="who" data-testid="user-email">${esc(u.name||u.email)}</span><button class="navbtn" data-act="logout" data-testid="logout-btn">Log out</button>`
      :`<button class="navbtn" data-act="register-open" data-testid="register-nav">Register</button><button class="btn small" data-act="login-open" data-testid="login-btn">Log in</button>`}`;
 }
 const ROUTES=[['Chennai','Bengaluru'],['Chennai','Madurai'],['Bengaluru','Hyderabad'],['Coimbatore','Kochi'],['Chennai','Tirupati']];
 
 function searchCard(){
-  const s=state.search,b=state.mode==='bus';
+  const s=state.search;
   return `<form class="searchcard panel" id="sform" novalidate data-testid="search-form">
     <h2>Find a train</h2>
     <div class="route-row">
@@ -536,19 +496,19 @@ function searchCard(){
     <div class="row2">
       <div class="field date"><label for="search-date">Date</label><input id="search-date" data-testid="search-date" type="date" min="${todayStr()}" value="${esc(s.date)}" data-s="date"></div>
       <div class="field"><label for="search-pax">Passengers</label><select id="search-pax" data-testid="search-pax" data-s="pax">${[1,2,3,4,5,6].map(n=>`<option value="${n}"${n===s.pax?' selected':''}>${n}</option>`).join('')}</select></div>
-      ${b?'':`<div class="field"><label for="search-class">Class</label><select id="search-class" data-testid="search-class" data-s="cls"><option value="ALL"${s.cls==='ALL'?' selected':''}>All classes</option>${['SL','3A','2A','1A','CC'].map(c=>`<option value="${c}"${s.cls===c?' selected':''}>${c} · ${CLSNAME[c]}</option>`).join('')}</select></div>`}
+      <div class="field"><label for="search-class">Class</label><select id="search-class" data-testid="search-class" data-s="cls"><option value="ALL"${s.cls==='ALL'?' selected':''}>All classes</option>${['SL','3A','2A','1A','CC'].map(c=>`<option value="${c}"${s.cls===c?' selected':''}>${c} · ${CLSNAME[c]}</option>`).join('')}</select></div>
     </div>
     ${state.searchErr?`<p class="err" role="alert" data-testid="search-error">${esc(state.searchErr)}</p>`:''}
-    <button class="btn wide" type="submit" data-testid="search-btn">Search ${b?'buses':'trains'}</button>
+    <button class="btn wide" type="submit" data-testid="search-btn">Search trains</button>
   </form>`;
 }
 function home(){
   return `<section class="hero"><div class="intro">
     <div class="pitch">
-      <p class="eyebrow">Train seats · Berths · One login</p>
+      <p class="eyebrow">Train seats · Berths · Simple booking</p>
       <h1>Happy Booking &amp; Happy Journey</h1>
       <p class="sub">Pick your coach and berth.</p>
-      <p class="lead">Search trains between South Indian cities, choose a lower berth or a window seat by coach, and pay once with a single login.</p>
+      <p class="lead">Search trains between South Indian cities, choose a lower berth or a window seat by coach, and book in a few steps.</p>
       <div class="chips" aria-label="Popular routes">${ROUTES.map(r=>`<button class="chip" data-act="route" data-from="${r[0]}" data-to="${r[1]}" data-testid="route-${r[0]}-${r[1]}">${r[0]} → ${r[1]}</button>`).join('')}</div>
     </div>
     ${searchCard()}
@@ -556,7 +516,7 @@ function home(){
   <section class="facts">
     <div class="fact"><h3>10-minute seat hold</h3><p>Seats you pick stay yours while you fill in passenger details. When the timer ends, they go back on sale.</p></div>
     <div class="fact"><h3>Booked seats stay locked</h3><p>A seat that is booked appears greyed out on the map and cannot be selected again.</p></div>
-    <div class="fact"><h3>Choose your berth</h3><p>On trains, pick lower, middle, upper or side berths by coach, or ask for an automatic assignment with a preference.</p></div>
+    <div class="fact"><h3>Choose your berth</h3><p>Pick lower, middle, upper or side berths by coach, or ask for an automatic assignment with a preference.</p></div>
   </section>
   <p class="note">Schedules, fares and seat availability on this site are generated sample data for demonstration.</p>`;
 }
@@ -566,31 +526,8 @@ function resultsHead(){
   return `<div class="sumbar panel"><div><strong>${esc(s.from)} → ${esc(s.to)}</strong> <span class="muted">· ${fmtDate(s.date)} · ${s.pax} passenger${s.pax>1?'s':''}</span></div><button class="btn ghost small" data-act="modify" data-testid="modify-search">Modify search</button></div>`;
 }
 function results(){
-  const b=state.mode==='bus';
-  let list=state.results.slice(),body='';
-  if(b){
-    const f=state.filter;
-    list=list.filter(x=>f.type==='all'||(f.type==='ac'&&x.type.ac)||(f.type==='nonac'&&!x.type.ac)||(f.type==='sleeper'&&x.type.sl)||(f.type==='seater'&&!x.type.sl));
-    const sorters={dep:(a,c)=>a.dep-c.dep,price:(a,c)=>a.price-c.price,dur:(a,c)=>a.dur-c.dur,rating:(a,c)=>c.rating-a.rating};
-    list.sort(sorters[f.sort]);
-    body=list.map(busCard).join('')||`<div class="empty panel">No buses match these filters.</div>`;
-  }else{
-    body=list.map(trainCard).join('')||`<div class="empty panel" data-testid="no-trains">${state.allDeparted?'All trains for today have already departed. Try a later date.':'No trains found for this search.'}</div>`;
-  }
-  const chips=[['all','All'],['ac','AC'],['nonac','Non-AC'],['sleeper','Sleeper'],['seater','Seater']];
-  const filters=b?`<div class="filters" role="group" aria-label="Filter buses">${chips.map(c=>`<button class="chip" aria-pressed="${state.filter.type===c[0]}" data-act="filter" data-v="${c[0]}" data-testid="filter-${c[0]}">${c[1]}</button>`).join('')}
-    <label class="lbl" for="sort" style="margin-left:auto">Sort</label>
-    <select id="sort" data-sort="1" data-testid="sort">${[['dep','Departure'],['price','Price'],['dur','Duration'],['rating','Rating']].map(o=>`<option value="${o[0]}"${state.filter.sort===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select></div>`:'<div style="height:14px"></div>';
-  return resultsHead()+filters+`<div class="list" data-testid="results">${body}</div>`;
-}
-function busCard(t){
-  const left=busLeft(t);
-  return `<article class="trip" data-testid="bus-result">
-    <div><h3>${esc(t.op)}</h3><p class="muted small">${esc(t.type.n)}</p><p style="margin-top:6px"><span class="badge">★ ${t.rating}</span></p></div>
-    <div class="times"><b>${clock(t.dep)}</b><span class="dur">${dur(t.dur)}</span><b>${clock(t.dep+t.dur)}</b></div>
-    <div class="buy"><div class="price">${inr(t.price)}<small>per seat</small></div><span class="small ${left<=6?'warn':'muted'}">${left} seats left</span>
-      <button class="btn" data-act="pick-bus" data-key="${esc(t.key)}" data-testid="select-seats">Select seats</button></div>
-  </article>`;
+  const body=state.results.map(trainCard).join('')||`<div class="empty panel" data-testid="no-trains">${state.allDeparted?'All trains for today have already departed. Try a later date.':'No trains found for this search.'}</div>`;
+  return resultsHead()+'<div style="height:14px"></div>'+`<div class="list" data-testid="results">${body}</div>`;
 }
 function trainCard(t){
   const want=state.search.cls;
@@ -609,9 +546,9 @@ function trainCard(t){
 
 /* summary aside shared by seats, passengers, payment */
 function summary(btn){
-  const t=state.trip,q=fare(),b=t.kind==='bus';
-  const title=b?t.op:`${t.name} ${t.no}`;
-  const sub=b?t.type.n:`${CLSNAME[state.cls]} (${state.cls})`;
+  const t=state.trip,q=fare();
+  const title=`${t.name} ${t.no}`;
+  const sub=`${CLSNAME[state.cls]} (${state.cls})`;
   const chips=state.noSeat?`<span class="badge">${state.waitStatus==='RAC'?'RAC':'Waitlist'} · no seat yet</span>`
     :(state.sel.length?state.sel.map(s=>`<span class="tag" data-testid="chosen-${esc(s.id)}">${esc(s.label)}</span>`).join(''):'<span class="muted small">No seats selected yet</span>');
   return `<aside class="panel summary" data-testid="summary">
@@ -628,26 +565,6 @@ function summary(btn){
 const LEGEND=`<div class="legend" aria-hidden="true"><span><i class="sw"></i>Available</span><span><i class="sw s"></i>Selected</span><span><i class="sw b"></i>Booked</span><span><i class="sw l"></i>Ladies only</span></div>`;
 function seatBtn(o){
   return `<button type="button" class="seat${o.cls||''}${o.ladies?' ladies':''}${o.sel?' sel':''}" data-act="seat" data-id="${o.id}" data-label="${esc(o.label)}" data-ladies="${o.ladies?1:0}" data-testid="seat-${o.id}" aria-pressed="${!!o.sel}" aria-label="Seat ${esc(o.label)}${o.ladies?', ladies only':''}${o.booked?', booked':''}"${o.booked?' disabled':''}>${o.text}</button>`;
-}
-const WHEEL=`<svg viewBox="0 0 24 24" width="22" height="22" role="img" aria-label="Driver"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M3 12h6M15 12h6M12 14v7" stroke="currentColor" stroke-width="2" fill="none"/></svg>`;
-
-function busMap(t){
-  const list=busSeats(t),m=mine(t.key),sel=new Set(state.sel.map(s=>s.id)),by={};
-  list.forEach(s=>by[s.id]=s);
-  const btn=id=>{const s=by[id];return seatBtn({id:s.id,label:s.label,text:s.label,ladies:s.ladies,booked:s.booked||m.has(s.id),sel:sel.has(s.id),cls:s.sleeper?' sleeper':''})};
-  let decks='';
-  if(t.type.sl){
-    decks=['L','U'].map(dk=>{
-      let rows='';
-      for(let r=1;r<=6;r++)rows+=`<div class="srow"><div class="pair">${btn(dk+r+'A')}${btn(dk+r+'B')}</div><div class="aisle"></div><div class="pair">${btn(dk+r+'C')}</div></div>`;
-      return `<div class="deck"><div class="deck-head"><span>${dk==='L'?'Lower deck':'Upper deck'}</span>${dk==='L'?WHEEL:'<span></span>'}</div>${rows}</div>`;
-    }).join('');
-  }else{
-    let rows='';
-    for(let r=1;r<=10;r++)rows+=`<div class="srow"><div class="pair">${btn(r+'A')}${btn(r+'B')}</div><div class="aisle"></div><div class="pair">${btn(r+'C')}${btn(r+'D')}</div></div>`;
-    decks=`<div class="deck"><div class="deck-head"><span>Seats</span>${WHEEL}</div>${rows}</div>`;
-  }
-  return LEGEND+`<div class="decks" data-testid="seat-map">${decks}</div>`;
 }
 const ABBR={Window:'W',Aisle:'A',Middle:'M'};
 const TIERS={LB:'Lower berth',MB:'Middle berth',UB:'Upper berth',SL:'Side lower berth',SU:'Side upper berth'};
@@ -685,8 +602,8 @@ function seats(){
   const t=state.trip,q=state.sel.length;
   const btn=`<button class="btn wide" data-act="to-pax" data-testid="continue-btn"${q?'':' disabled'}>Continue with ${q||0} seat${q===1?'':'s'}</button>`;
   return `<div class="crumb"><button class="linkbtn" data-act="back-results" data-testid="back-results">← Back to results</button></div>
-  <div class="seatgrid"><section class="panel"><h2>${t.kind==='bus'?'Choose your seats':`Choose seats in ${esc(CLSNAME[state.cls])}`}</h2><p class="muted small">Select up to ${MAXP}. Selected seats are held for 10 minutes.</p>
-  ${t.kind==='bus'?busMap(t):trainMap(t)}</section>${summary(btn)}</div>`;
+  <div class="seatgrid"><section class="panel"><h2>Choose seats in ${esc(CLSNAME[state.cls])}</h2><p class="muted small">Select up to ${MAXP}. Selected seats are held for 10 minutes.</p>
+  ${trainMap(t)}</section>${summary(btn)}</div>`;
 }
 
 function ensurePax(n){
@@ -697,7 +614,7 @@ function ensurePax(n){
 const fe=k=>state.errors[k]?`<span class="err" id="e-${k}">${esc(state.errors[k])}</span>`:'';
 const inv=k=>state.errors[k]?` aria-invalid="true" aria-describedby="e-${k}"`:'';
 function passengers(){
-  const t=state.trip,n=paxCount();ensurePax(n);
+  const n=paxCount();ensurePax(n);
   const forms=state.pax.map((p,i)=>{
     const s=state.sel[i];
     return `<fieldset class="pax"><legend>Passenger ${i+1} · ${esc(s?s.label:(state.waitStatus==='RAC'?'RAC':'Waitlist'))}</legend>
@@ -707,15 +624,11 @@ function passengers(){
       <div class="field"><label for="pgender-${i}">Gender</label><select id="pgender-${i}" data-testid="pgender-${i}" data-p="gender" data-i="${i}"${inv('gender-'+i)}><option value="">Select</option>${['Female','Male','Other'].map(g=>`<option${p.gender===g?' selected':''}>${g}</option>`).join('')}</select>${fe('gender-'+i)}</div>
     </div>${s&&s.ladies?'<p class="small" style="color:var(--ladies);margin-top:8px">Ladies-only seat</p>':''}</fieldset>`;
   }).join('');
-  const bus=t.kind==='bus';
-  const points=bus?`<div class="grid2" style="margin-bottom:12px">
-    <div class="field"><label for="board">Boarding point</label><select id="board" data-testid="boarding" data-pt="board">${t.board.map((x,i)=>`<option value="${i}"${state.board===i?' selected':''}>${esc(x.n)} · ${clock(x.t)}</option>`).join('')}</select></div>
-    <div class="field"><label for="drop">Dropping point</label><select id="drop" data-testid="dropping" data-pt="drop">${t.drop.map((x,i)=>`<option value="${i}"${state.drop===i?' selected':''}>${esc(x.n)} · ${clock(x.t)}</option>`).join('')}</select></div></div>`:'';
   const notice=state.noSeat?`<div class="banner warn" style="margin-bottom:12px" data-testid="wl-notice">${state.waitStatus==='RAC'?'This class is full. A RAC ticket gives you a shared berth and a confirmed berth if someone cancels.':'This class is full. A waitlisted ticket is confirmed only if other passengers cancel.'} You can still cancel for a refund.</div>`:'';
   const btn=`<button class="btn wide" data-act="to-pay" data-testid="to-payment">Continue to payment</button><button class="btn ghost wide" data-act="${state.noSeat?'back-results':'back-seats'}">${state.noSeat?'Back to results':'Change seats'}</button>`;
   return `<div class="crumb"><button class="linkbtn" data-act="${state.noSeat?'back-results':'back-seats'}">← ${state.noSeat?'Back to results':'Back to seats'}</button></div>
   <div class="seatgrid"><section class="panel"><h2>Passenger details</h2><p class="muted small" style="margin-bottom:14px">Names must match the ID carried while travelling.</p>
-  ${notice}${points}${forms}
+  ${notice}${forms}
   <div class="grid2"><div class="field"><label for="mobile">Mobile number</label><input id="mobile" data-testid="contact-mobile" data-c="mobile" inputmode="numeric" maxlength="10" value="${esc(state.contact.mobile)}"${inv('mobile')}>${fe('mobile')}</div>
   <div class="field"><label for="email">Email</label><input id="email" data-testid="contact-email" data-c="email" type="email" value="${esc(state.contact.email)}"${inv('email')}>${fe('email')}</div></div>
   </section>${summary(btn)}</div>`;
@@ -736,7 +649,7 @@ function payment(){
 
 function stText(s){return s==='CONFIRMED'?'Confirmed':s==='RAC'?'RAC':s==='WAITLIST'?'Waitlist':'Cancelled'}
 function paxTable(b){
-  return `<div class="tablewrap"><table><thead><tr><th>Passenger</th><th>Age / sex</th><th>${b.type==='bus'?'Seat':'Berth'}</th></tr></thead><tbody>${b.pax.map(p=>`<tr><td>${esc(p.name)}</td><td>${p.age} / ${esc(p.gender[0])}${p.age>=60&&b.type==='train'?' · Senior':''}</td><td class="mono">${esc(p.label)}</td></tr>`).join('')}</tbody></table></div>`;
+  return `<div class="tablewrap"><table><thead><tr><th>Passenger</th><th>Age / sex</th><th>Berth</th></tr></thead><tbody>${b.pax.map(p=>`<tr><td>${esc(p.name)}</td><td>${p.age} / ${esc(p.gender[0])}${p.age>=60?' · Senior':''}</td><td class="mono">${esc(p.label)}</td></tr>`).join('')}</tbody></table></div>`;
 }
 function ticket(){
   const b=state.booking,ok=b.status==='CONFIRMED';
@@ -745,7 +658,6 @@ function ticket(){
   <article class="ticket panel" data-testid="ticket"><div class="t-main">
     <div><p class="lbl">${esc(b.title)} · ${esc(b.sub)}</p><p class="big-route">${esc(b.from)} → ${esc(b.to)}</p></div>
     <div class="times"><div><p class="lbl">Departs</p><b>${fmtDate(b.date)}, ${clock(b.dep)}</b></div><div><p class="lbl">Arrives</p><b>${clock(b.arr)}</b></div></div>
-    ${b.boarding?`<p class="small"><span class="muted">Boarding:</span> ${esc(b.boarding)} &nbsp; <span class="muted">Dropping:</span> ${esc(b.dropping)}</p>`:''}
     ${paxTable(b)}
     <div class="line total"><span>Total paid</span><span>${inr(b.total)}</span></div>
   </div><div class="stub"><p class="lbl">PNR</p><p class="pnr" data-testid="pnr">${b.pnr}</p><p class="lbl" style="margin-top:10px">Status</p><p><span class="status ${ok?'ok':'warn'}">${stText(b.status)}</span></p></div></article>
@@ -759,16 +671,16 @@ function refundInfo(b){
   return{h,pct,amount:Math.round(b.base*pct/100)};
 }
 function trips(){
-  if(!state.user)return `<div class="crumb"></div><div class="panel empty" data-testid="trips-login"><h2 style="margin-bottom:8px">Log in to see your trips</h2><p style="margin-bottom:14px">Your bus and train bookings are listed together under one account.</p><button class="btn" data-act="login-open">Log in</button></div>`;
+  if(!state.user)return `<div class="crumb"></div><div class="panel empty" data-testid="trips-login"><h2 style="margin-bottom:8px">Log in to see your trips</h2><p style="margin-bottom:14px">Your train bookings are listed here under your account.</p><button class="btn" data-act="login-open">Log in</button></div>`;
   const now=Date.now();
-  const mineB=state.bookings.filter(b=>b.user===state.user.email).sort((a,b)=>a.depTs-b.depTs);
+  const mineB=state.bookings.filter(b=>b.user===state.user.email&&b.type!=='bus').sort((a,b)=>a.depTs-b.depTs);
   const tabs={upcoming:mineB.filter(b=>b.status!=='CANCELLED'&&b.depTs>now),completed:mineB.filter(b=>b.status!=='CANCELLED'&&b.depTs<=now),cancelled:mineB.filter(b=>b.status==='CANCELLED')};
   const cur=tabs[state.tripsTab];
   const cards=cur.map(b=>{
     const r=refundInfo(b);
     const cancelBox=state.cancelId===b.id?`<div class="cancelbox" data-testid="cancel-box"><p><strong>Refund: ${inr(r.amount)}</strong> <span class="muted">(${r.pct}% of the fare${r.pct===0?', departure is under 6 hours away':r.pct===50?', departure is 6 to 24 hours away':', departure is over 24 hours away'}; the service fee is not refunded)</span></p><div class="actions" style="margin:0"><button class="btn danger" data-act="cancel-do" data-id="${b.id}" data-testid="cancel-confirm">Cancel booking</button><button class="btn ghost" data-act="cancel-keep">Keep booking</button></div></div>`:'';
     return `<article class="panel tripcard" data-testid="trip-card">
-      <div class="head"><div><p class="lbl">${b.type==='bus'?'Bus':'Train'} · ${esc(b.title)}</p><h3>${esc(b.from)} → ${esc(b.to)}</h3><p class="muted small">${fmtDate(b.date)}, ${clock(b.dep)} · PNR <span class="mono">${b.pnr}</span></p></div><span class="status ${b.status==='CANCELLED'?'bad':b.status==='CONFIRMED'?'ok':'warn'}" data-testid="trip-status">${stText(b.status)}</span></div>
+      <div class="head"><div><p class="lbl">Train · ${esc(b.title)}</p><h3>${esc(b.from)} → ${esc(b.to)}</h3><p class="muted small">${fmtDate(b.date)}, ${clock(b.dep)} · PNR <span class="mono">${b.pnr}</span></p></div><span class="status ${b.status==='CANCELLED'?'bad':b.status==='CONFIRMED'?'ok':'warn'}" data-testid="trip-status">${stText(b.status)}</span></div>
       ${paxTable(b)}
       <div class="line"><span>${b.status==='CANCELLED'?`Refunded ${inr(b.refund||0)}`:`Total paid`}</span><strong>${inr(b.total)}</strong></div>
       ${cancelBox}
@@ -940,7 +852,6 @@ const VIEWS={home,results,seats,passengers,payment,ticket,trips,register};
 function render(){
   const ae=document.activeElement;
   const keep=ae&&ae.dataset&&ae.dataset.id?ae.dataset.id:null;
-  document.body.dataset.mode=state.mode;
   $('#nav').innerHTML=navHtml();
   $('#app').innerHTML=VIEWS[state.view]();
   if(keep){const n=document.querySelector(`[data-id="${CSS.escape(keep)}"]`);if(n)n.focus({preventScroll:true})}
@@ -986,14 +897,14 @@ window.addEventListener('popstate',()=>{
 });
 /* booking-in-progress lives in sessionStorage (per tab). Passwords and the register form are never stored. */
 function persist(){
-  sess.set('safar_flow',{mode:state.mode,search:state.search,rs:state.rs,filter:state.filter,tripsTab:state.tripsTab,
+  sess.set('safar_flow',{search:state.search,rs:state.rs,tripsTab:state.tripsTab,
     tripKey:state.trip?state.trip.key:null,cls:state.cls,coach:state.coach,sel:state.sel,hold:state.hold,noSeat:state.noSeat,
-    waitStatus:state.waitStatus,pref:state.pref,pax:state.pax,contact:state.contact,board:state.board,drop:state.drop,
+    waitStatus:state.waitStatus,pref:state.pref,pax:state.pax,contact:state.contact,
     payMethod:state.payMethod,payOutcome:state.payOutcome,pending:state.pending,bookingId:state.booking?state.booking.id:null});
 }
 function restore(){
   const d=sess.get('safar_flow');if(!d)return;
-  state.mode=d.mode||state.mode;state.filter=d.filter||state.filter;state.tripsTab=d.tripsTab||'upcoming';
+  state.tripsTab=d.tripsTab||'upcoming';
   if(d.search)Object.assign(state.search,d.search);
   if(!state.search.date||state.search.date<todayStr())state.search.date=addDays(1);
   if(d.contact)state.contact=d.contact;
@@ -1002,7 +913,7 @@ function restore(){
     const t=state.results.find(x=>x.key===d.tripKey)||genAll(state.rs).find(x=>x.key===d.tripKey);
     if(t){
       Object.assign(state,{trip:t,cls:d.cls||null,coach:d.coach||0,noSeat:!!d.noSeat,waitStatus:d.waitStatus||'',pref:d.pref||'Any',
-        board:d.board||0,drop:d.drop==null?2:d.drop,payMethod:d.payMethod||'upi',payOutcome:d.payOutcome||'success',pending:!!d.pending});
+        payMethod:d.payMethod||'upi',payOutcome:d.payOutcome||'success',pending:!!d.pending});
       /* the 10-minute hold keeps counting while the page is reloaded; once it has run out the seats are released */
       if(d.hold&&d.hold.key===t.key&&d.hold.exp>Date.now()){state.sel=d.sel||[];state.hold=d.hold;state.pax=d.pax||[]}
       else if(d.noSeat)state.pax=d.pax||[];
@@ -1027,10 +938,9 @@ function doSearch(){
   s.from=f;s.to=t;
   state.rs={from:f,to:t,date:s.date};
   buildResults();
-  state.filter={type:'all',sort:'dep'};
   go('results');
 }
-const genAll=rs=>state.mode==='bus'?genBuses(rs.from,rs.to,rs.date):genTrains(rs.from,rs.to,rs.date);
+const genAll=rs=>genTrains(rs.from,rs.to,rs.date);
 /* results come from the searched route (state.rs), not the form fields, so editing the form never changes an open trip */
 function buildResults(){
   const all=genAll(state.rs),now=Date.now();
@@ -1039,7 +949,7 @@ function buildResults(){
   state.allDeparted=all.length>0&&state.results.length===0;
 }
 function openTrip(t,cls){
-  Object.assign(state,{trip:t,cls:cls||null,coach:0,sel:[],hold:null,pax:[],errors:{},board:0,drop:2,noSeat:false,waitStatus:'',payErr:'',pending:false,pref:'Any'});
+  Object.assign(state,{trip:t,cls:cls||null,coach:0,sel:[],hold:null,pax:[],errors:{},noSeat:false,waitStatus:'',payErr:'',pending:false,pref:'Any'});
 }
 function syncHold(){
   if(state.sel.length&&!state.hold)state.hold={key:state.trip.key,exp:Date.now()+HOLD_MS};
@@ -1102,19 +1012,18 @@ function pay(){
   finalize();
 }
 function finalize(){
-  const t=state.trip,q=fare(),bus=t.kind==='bus';
+  const t=state.trip,q=fare();
   if(!state.noSeat){
     const taken=mine(t.key);
     if(state.sel.some(s=>taken.has(s.id))){state.payErr='One of your seats was just taken. Go back and choose another seat.';state.pending=false;render();return}
   }
   const status=state.noSeat?state.waitStatus:'CONFIRMED';
-  const ci=bus?null:classOf(t);
+  const ci=classOf(t);
   const b={
     id:'b'+Date.now(),
-    pnr:bus?'SF'+String(Math.floor(Math.random()*1e8)).padStart(8,'0'):'4'+String(Math.floor(Math.random()*1e9)).padStart(9,'0'),
-    type:t.kind,tripKey:t.key,from:t.from,to:t.to,date:t.date,dep:t.dep,arr:t.dep+t.dur,depTs:depTs(t.date,t.dep),
-    title:bus?t.op:`${t.name} ${t.no}`,sub:bus?t.type.n:`${CLSNAME[ci.cls]} (${ci.cls})`,cls:ci?ci.cls:null,
-    boarding:bus?t.board[state.board].n:null,dropping:bus?t.drop[state.drop].n:null,
+    pnr:'4'+String(Math.floor(Math.random()*1e9)).padStart(9,'0'),
+    type:'train',tripKey:t.key,from:t.from,to:t.to,date:t.date,dep:t.dep,arr:t.dep+t.dur,depTs:depTs(t.date,t.dep),
+    title:`${t.name} ${t.no}`,sub:`${CLSNAME[ci.cls]} (${ci.cls})`,cls:ci.cls,
     status,pax:state.pax.map((p,i)=>({name:p.name.trim(),age:Number(p.age),gender:p.gender,seat:state.sel[i]?state.sel[i].id:null,label:state.sel[i]?state.sel[i].label:stText(status)})),
     contact:{mobile:state.contact.mobile.trim(),email:state.contact.email.trim()},
     base:q.base,fee:q.fee,total:q.total,createdAt:Date.now(),user:state.user.email
@@ -1132,13 +1041,10 @@ document.addEventListener('click',e=>{
   const a=el.dataset.act,d=el.dataset;
   switch(a){
     case'home':state.view='home';go('home');break;
-    case'mode':state.mode=d.mode;state.searchErr='';if(state.view!=='home'){state.results=[];state.rs=null;}go('home');break;
     case'swap':{const s=state.search;[s.from,s.to]=[s.to,s.from];render();break}
     case'route':state.search.from=d.from;state.search.to=d.to;state.searchErr='';render();break;
     case'modify':go('home');break;
     case'new-search':go('home');break;
-    case'filter':state.filter.type=d.v;render();break;
-    case'pick-bus':{const t=state.results.find(x=>x.key===d.key);openTrip(t,null);go('seats');break}
     case'pick-class':{
       const t=state.results.find(x=>x.key===d.key);openTrip(t,d.cls);
       const info=classInfo(t,classOf(t));
@@ -1197,10 +1103,8 @@ function onFieldInner(e){
   if(d.s){const s=state.search;s[d.s]=d.s==='pax'?Number(el.value):el.value;return}
   if(d.p){const p=state.pax[Number(d.i)];if(p)p[d.p]=el.value;return}
   if(d.c){state.contact[d.c]=el.value;return}
-  if(d.pt){state[d.pt]=Number(el.value);return}
   if(d.pref){state.pref=el.value;return}
   if(d.pay){if(d.pay==='method')state.payMethod=el.value;else{state.payOutcome=el.value;state.payErr=''}return}
-  if(d.sort&&e.type==='change'){state.filter.sort=el.value;render()}
 }
 document.addEventListener('input',onField);
 document.addEventListener('change',onField);

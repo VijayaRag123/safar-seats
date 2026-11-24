@@ -6,8 +6,12 @@ on:
     branches: [ main, master ]
 jobs:
   test:
-    timeout-minutes: 60
+    timeout-minutes: 20
     runs-on: ubuntu-latest
+    env:
+      # Pull requests: Chromium only (fast feedback). Pushes to main: Chromium, Firefox and WebKit.
+      PW_PROJECT: ${{ github.event_name == 'pull_request' && '--project=chromium' || '' }}
+      PW_BROWSERS: ${{ github.event_name == 'pull_request' && 'chromium' || '' }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
@@ -16,9 +20,11 @@ jobs:
     - name: Install dependencies
       run: npm ci
     - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
+      run: npx playwright install --with-deps $PW_BROWSERS
+    # The tests start their own local server (see playwright.config.js), so they check
+    # the code in this commit and do not depend on the GitHub Pages deploy.
     - name: Run Playwright tests
-      run: npx playwright test
+      run: npx playwright test $PW_PROJECT
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:
