@@ -224,6 +224,14 @@ h1{font-size:clamp(30px,4.6vw,46px);line-height:1.08;letter-spacing:-.025em}
 .stack{display:flex;flex-direction:column;gap:14px}
 .opt{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 12px;cursor:pointer}
 .opt input{width:auto}
+.savedpick{margin:0 0 10px}
+.savecheck{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:14px;cursor:pointer}
+.savecheck input{width:auto}
+.savedtag{margin-top:10px}
+.splist{list-style:none;padding:0;margin:0}
+.spax{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--line)}
+.spax:first-child{border-top:0}
+.spax-actions{display:flex;gap:8px}
 .banner{border:1px solid var(--line);border-left-width:4px;border-radius:8px;padding:10px 12px;background:var(--surface);font-size:14px}
 .banner.ok{border-left-color:var(--ok)} .banner.warn{border-left-color:var(--warn)} .banner.bad{border-left-color:var(--bad)}
 
@@ -457,7 +465,7 @@ const state={
   pax:[],contact:{mobile:'',email:''},errors:{},
   payMethod:'upi',payOutcome:'success',payErr:'',pending:false,
   user:store.get('safar_user'),bookings:store.get('safar_bookings')||[],
-  tripsTab:'upcoming',cancelId:null,booking:null,rs:null,allDeparted:false,
+  tripsTab:'upcoming',cancelId:null,booking:null,rs:null,allDeparted:false,savedEdit:null,savedDel:null,spForm:{name:'',age:'',gender:''},
   modal:null,afterLogin:null,reg:newReg(),cap:'',otpSent:false
 };
 const saveBookings=()=>store.set('safar_bookings',state.bookings);
@@ -478,8 +486,8 @@ function fare(){
 /* ---------- views ---------- */
 function navHtml(){
   const u=state.user,v=state.view;
-  return `<button class="navbtn${v!=='trips'?' on':''}" data-act="home" data-testid="nav-train">Book a train</button>
-  ${u?`<button class="navbtn${v==='trips'?' on':''}" data-act="trips" data-testid="nav-trips"${v==='trips'?' aria-current="page"':''}>My trips</button><span class="who" data-testid="user-email">${esc(u.name||u.email)}</span><button class="navbtn" data-act="logout" data-testid="logout-btn">Log out</button>`
+  return `<button class="navbtn${v!=='trips'&&v!=='saved'?' on':''}" data-act="home" data-testid="nav-train">Book a train</button>
+  ${u?`<button class="navbtn${v==='trips'?' on':''}" data-act="trips" data-testid="nav-trips"${v==='trips'?' aria-current="page"':''}>My trips</button><button class="navbtn${v==='saved'?' on':''}" data-act="saved-open" data-testid="nav-saved"${v==='saved'?' aria-current="page"':''}>Saved passengers</button><span class="who" data-testid="user-email">${esc(u.name||u.email)}</span><button class="navbtn" data-act="logout" data-testid="logout-btn">Log out</button>`
      :`<button class="navbtn" data-act="register-open" data-testid="register-nav">Register</button><button class="btn small" data-act="login-open" data-testid="login-btn">Log in</button>`}`;
 }
 const ROUTES=[['Chennai','Bengaluru'],['Chennai','Madurai'],['Bengaluru','Hyderabad'],['Coimbatore','Kochi'],['Chennai','Tirupati']];
@@ -607,7 +615,7 @@ function seats(){
 }
 
 function ensurePax(n){
-  while(state.pax.length<n)state.pax.push({name:'',age:'',gender:''});
+  while(state.pax.length<n)state.pax.push({name:'',age:'',gender:'',save:false});
   state.pax.length=n;
   if(!state.contact.email&&state.user)state.contact.email=state.user.email;
 }
@@ -615,20 +623,28 @@ const fe=k=>state.errors[k]?`<span class="err" id="e-${k}">${esc(state.errors[k]
 const inv=k=>state.errors[k]?` aria-invalid="true" aria-describedby="e-${k}"`:'';
 function passengers(){
   const n=paxCount();ensurePax(n);
+  const saved=savedList();
   const forms=state.pax.map((p,i)=>{
     const s=state.sel[i];
+    /* pick someone saved earlier; a person already added to another passenger of this booking is disabled */
+    const picker=saved.length?`<div class="field savedpick"><label for="psaved-${i}">Saved passengers</label><select id="psaved-${i}" data-testid="psaved-${i}" data-id="psaved-${i}" data-saved="${i}"><option value="">Choose a saved passenger</option>${saved.map(x=>{const taken=state.pax.some((o,j)=>j!==i&&o.name&&samePerson(o,x));return `<option value="${x.id}"${taken?' disabled':''}>${esc(x.name)} · ${x.age} · ${esc(x.gender)}${taken?' (already added)':''}</option>`}).join('')}</select></div>`:'';
+    const alreadySaved=state.user&&saved.some(x=>samePerson(x,p)&&x.age===Number(p.age));
+    const saveRow=alreadySaved?`<p class="small muted savedtag" data-testid="psaved-tag-${i}">✓ In your saved passengers</p>`
+      :`<label class="savecheck"><input type="checkbox" data-save="${i}" data-testid="psave-${i}"${p.save?' checked':''}> Save to my passengers for future bookings</label>`;
     return `<fieldset class="pax"><legend>Passenger ${i+1} · ${esc(s?s.label:(state.waitStatus==='RAC'?'RAC':'Waitlist'))}</legend>
-    <div class="grid3">
+    ${picker}<div class="grid3">
       <div class="field"><label for="pname-${i}">Full name</label><input id="pname-${i}" data-testid="pname-${i}" data-p="name" data-i="${i}" value="${esc(p.name)}" autocomplete="off"${inv('name-'+i)}>${fe('name-'+i)}</div>
       <div class="field"><label for="page-${i}">Age</label><input id="page-${i}" data-testid="page-${i}" data-p="age" data-i="${i}" inputmode="numeric" value="${esc(p.age)}"${inv('age-'+i)}>${fe('age-'+i)}</div>
       <div class="field"><label for="pgender-${i}">Gender</label><select id="pgender-${i}" data-testid="pgender-${i}" data-p="gender" data-i="${i}"${inv('gender-'+i)}><option value="">Select</option>${['Female','Male','Other'].map(g=>`<option${p.gender===g?' selected':''}>${g}</option>`).join('')}</select>${fe('gender-'+i)}</div>
-    </div>${s&&s.ladies?'<p class="small" style="color:var(--ladies);margin-top:8px">Ladies-only seat</p>':''}</fieldset>`;
+    </div>${s&&s.ladies?'<p class="small" style="color:var(--ladies);margin-top:8px">Ladies-only seat</p>':''}${saveRow}</fieldset>`;
   }).join('');
+  const savedHint=state.user?'':`<div class="banner" style="margin-bottom:12px" data-testid="saved-hint">Log in to add passengers you saved earlier, or to save these for next time. <button type="button" class="linkbtn" data-act="login-open">Log in</button></div>`;
+  const manage=state.user&&saved.length?`<p style="margin:0 0 12px"><button type="button" class="linkbtn" data-act="saved-open" data-testid="manage-saved">Manage saved passengers</button></p>`:'';
   const notice=state.noSeat?`<div class="banner warn" style="margin-bottom:12px" data-testid="wl-notice">${state.waitStatus==='RAC'?'This class is full. A RAC ticket gives you a shared berth and a confirmed berth if someone cancels.':'This class is full. A waitlisted ticket is confirmed only if other passengers cancel.'} You can still cancel for a refund.</div>`:'';
   const btn=`<button class="btn wide" data-act="to-pay" data-testid="to-payment">Continue to payment</button><button class="btn ghost wide" data-act="${state.noSeat?'back-results':'back-seats'}">${state.noSeat?'Back to results':'Change seats'}</button>`;
   return `<div class="crumb"><button class="linkbtn" data-act="${state.noSeat?'back-results':'back-seats'}">← ${state.noSeat?'Back to results':'Back to seats'}</button></div>
   <div class="seatgrid"><section class="panel"><h2>Passenger details</h2><p class="muted small" style="margin-bottom:14px">Names must match the ID carried while travelling.</p>
-  ${notice}${forms}
+  ${notice}${savedHint}${forms}${manage}
   <div class="grid2"><div class="field"><label for="mobile">Mobile number</label><input id="mobile" data-testid="contact-mobile" data-c="mobile" inputmode="numeric" maxlength="10" value="${esc(state.contact.mobile)}"${inv('mobile')}>${fe('mobile')}</div>
   <div class="field"><label for="email">Email</label><input id="email" data-testid="contact-email" data-c="email" type="email" value="${esc(state.contact.email)}"${inv('email')}>${fe('email')}</div></div>
   </section>${summary(btn)}</div>`;
@@ -690,6 +706,92 @@ function trips(){
   return `<div class="crumb"></div><h2>My trips</h2>
   <div class="subtabs" role="tablist">${['upcoming','completed','cancelled'].map(k=>`<button class="coachbtn" role="tab" aria-selected="${state.tripsTab===k}" data-act="trips-tab" data-k="${k}" data-testid="tab-${k}">${k[0].toUpperCase()+k.slice(1)} (${tabs[k].length})</button>`).join('')}</div>
   <div class="stack" style="margin-bottom:30px">${cards}</div>`;
+}
+
+/* ---------- saved passengers (per account, kept in this browser) ---------- */
+const NAME_RE=/^[A-Za-z][A-Za-z .'-]{1,39}$/;
+const SAVED_MAX=20;
+const savedKey=()=>state.user?state.user.email.toLowerCase():null;
+function savedList(){
+  const k=savedKey();if(!k)return [];
+  const all=store.get('safar_saved_pax')||{};
+  return Array.isArray(all[k])?all[k]:[];
+}
+function writeSaved(list){
+  const k=savedKey();if(!k)return;
+  const all=store.get('safar_saved_pax')||{};
+  all[k]=list;store.set('safar_saved_pax',all);
+}
+/* the same person = same name (ignoring case) and gender; a changed age updates the saved record */
+const samePerson=(a,b)=>a.name.trim().toLowerCase()===b.name.trim().toLowerCase()&&a.gender===b.gender;
+const newId=()=>'sp'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+/* called after a booking is made: store the passengers the user ticked "Save" for */
+function saveCheckedPassengers(){
+  const out={added:0,updated:0,full:false};
+  if(!state.user)return out;
+  const list=savedList().map(x=>({...x}));
+  state.pax.filter(p=>p.save).forEach(p=>{
+    const i=list.findIndex(x=>samePerson(x,p));
+    if(i>=0){if(list[i].age!==Number(p.age)){list[i]={...list[i],name:p.name.trim(),age:Number(p.age)};out.updated++}}
+    else if(list.length>=SAVED_MAX)out.full=true;
+    else{list.push({id:newId(),name:p.name.trim(),age:Number(p.age),gender:p.gender});out.added++}
+  });
+  if(out.added||out.updated)writeSaved(list);
+  return out;
+}
+function fillFromSaved(i,id){
+  const p=state.pax[i],x=savedList().find(y=>y.id===id);
+  if(!p||!x)return;
+  Object.assign(p,{name:x.name,age:String(x.age),gender:x.gender,save:false});
+  ['name-','age-','gender-'].forEach(k=>delete state.errors[k+i]);
+  render();
+}
+const blankSp=()=>({name:'',age:'',gender:''});
+function savedPage(){
+  if(!state.user)return `<div class="crumb"></div><div class="panel empty" data-testid="saved-login"><h2 style="margin-bottom:8px">Log in to see your saved passengers</h2><p style="margin-bottom:14px">Save the people you travel with once and add them to any booking.</p><button class="btn" data-act="login-open">Log in</button></div>`;
+  const list=savedList(),f=state.spForm;
+  const editing=state.savedEdit?list.find(x=>x.id===state.savedEdit):null;
+  const full=!editing&&list.length>=SAVED_MAX;
+  const rows=list.map(x=>`<li class="spax" data-testid="saved-pax"><div><strong>${esc(x.name)}</strong> <span class="muted small">${x.age} · ${esc(x.gender)}</span></div>${state.savedDel===x.id
+    ?`<div class="cancelbox" style="flex:1 1 100%" data-testid="saved-del-box"><p>Remove <strong>${esc(x.name)}</strong> from your saved passengers? Tickets you already booked are not changed.</p><div class="actions" style="margin:0"><button class="btn danger" data-act="saved-del-do" data-id="${x.id}" data-testid="saved-del-confirm">Remove</button><button class="btn ghost" data-act="saved-del-keep">Keep</button></div></div>`
+    :`<div class="spax-actions"><button class="btn ghost small" data-act="saved-edit" data-id="${x.id}" aria-label="Edit ${esc(x.name)}">Edit</button><button class="btn ghost small" data-act="saved-del" data-id="${x.id}" aria-label="Delete ${esc(x.name)}">Delete</button></div>`}</li>`).join('');
+  return `<div class="crumb"></div><h2>Saved passengers</h2>
+  <p class="muted small" style="margin-bottom:14px">People you travel with. Choose them on the passenger step instead of typing their details again. They are kept in this browser, under your account.</p>
+  <div class="stack" style="margin-bottom:30px">
+  <section class="panel"><h3 style="margin-bottom:6px">Your passengers (${list.length} of ${SAVED_MAX})</h3>${list.length?`<ul class="splist">${rows}</ul>`:`<p class="muted" data-testid="saved-empty">No saved passengers yet. Add one below, or tick "Save to my passengers" while booking.</p>`}</section>
+  <form class="panel" id="spform" novalidate data-testid="saved-form"><h3 style="margin-bottom:10px">${editing?`Edit ${esc(editing.name)}`:'Add a passenger'}</h3>
+    <div class="grid3">
+      <div class="field"><label for="sp-name">Full name</label><input id="sp-name" data-testid="sp-name" data-sp="name" value="${esc(f.name)}" autocomplete="off"${inv('sname')}>${fe('sname')}</div>
+      <div class="field"><label for="sp-age">Age</label><input id="sp-age" data-testid="sp-age" data-sp="age" inputmode="numeric" value="${esc(f.age)}"${inv('sage')}>${fe('sage')}</div>
+      <div class="field"><label for="sp-gender">Gender</label><select id="sp-gender" data-testid="sp-gender" data-sp="gender"${inv('sgender')}><option value="">Select</option>${['Female','Male','Other'].map(g=>`<option${f.gender===g?' selected':''}>${g}</option>`).join('')}</select>${fe('sgender')}</div>
+    </div>
+    <div class="actions" style="margin-top:12px"><button class="btn" type="submit" data-testid="sp-save"${full?' disabled':''}>${editing?'Save changes':'Add passenger'}</button>${editing?'<button class="btn ghost" type="button" data-act="saved-cancel" data-testid="sp-cancel">Cancel</button>':''}</div>
+    ${full?`<p class="muted small" style="margin-top:8px" data-testid="saved-full">You can save up to ${SAVED_MAX} passengers. Remove one to add another.</p>`:''}
+  </form></div>`;
+}
+function savedSubmit(){
+  const f=state.spForm,e={};
+  if(!NAME_RE.test(f.name.trim()))e.sname='Enter the name using letters only, 2 to 40 characters.';
+  const a=Number(f.age);
+  if(!f.age||!Number.isInteger(a)||a<1||a>120)e.sage='Enter an age between 1 and 120.';
+  if(!f.gender)e.sgender='Select a gender.';
+  const list=savedList().map(x=>({...x}));
+  if(!e.sname&&!e.sgender&&list.some(x=>x.id!==state.savedEdit&&samePerson(x,f)))e.sname='This passenger is already saved.';
+  if(!state.savedEdit&&list.length>=SAVED_MAX)e.sname=`You can save up to ${SAVED_MAX} passengers.`;
+  state.errors=e;
+  if(Object.keys(e).length){render();const bad=document.querySelector('[aria-invalid="true"]');if(bad)bad.focus();return}
+  const name=f.name.trim();
+  if(state.savedEdit){
+    const x=list.find(y=>y.id===state.savedEdit);
+    if(x){x.name=name;x.age=a;x.gender=f.gender}
+    toast(`Updated ${name}.`);
+  }else{
+    list.push({id:newId(),name,age:a,gender:f.gender});
+    toast(`Saved ${name}.`);
+  }
+  writeSaved(list);
+  state.savedEdit=null;state.spForm=blankSp();state.errors={};
+  render();
 }
 
 /* ---------- accounts, login, register ---------- */
@@ -848,7 +950,7 @@ async function regConfirm(){
 }
 
 /* ---------- rendering ---------- */
-const VIEWS={home,results,seats,passengers,payment,ticket,trips,register};
+const VIEWS={home,results,seats,passengers,payment,ticket,trips,saved:savedPage,register};
 function render(){
   const ae=document.activeElement;
   const keep=ae&&ae.dataset&&ae.dataset.id?ae.dataset.id:null;
@@ -860,7 +962,7 @@ function render(){
 }
 
 /* ---------- routing (#/results, #/seats ...) and reload persistence ---------- */
-const TITLES={home:'Home',results:'Train results',seats:'Choose seats',passengers:'Passenger details',payment:'Payment',ticket:'Your ticket',trips:'My trips',register:'Register'};
+const TITLES={home:'Home',results:'Train results',seats:'Choose seats',passengers:'Passenger details',payment:'Payment',ticket:'Your ticket',trips:'My trips',saved:'Saved passengers',register:'Register'};
 const hashOf=v=>v==='home'?'#/':'#/'+v;
 const viewOfHash=()=>location.hash.replace(/^#\/?/,'')||'home';
 const sess={
@@ -982,7 +1084,7 @@ function autoAssign(){
 function validate(){
   const e={};
   state.pax.forEach((p,i)=>{
-    if(!/^[A-Za-z][A-Za-z .'-]{1,39}$/.test(p.name.trim()))e['name-'+i]='Enter the name using letters only, 2 to 40 characters.';
+    if(!NAME_RE.test(p.name.trim()))e['name-'+i]='Enter the name using letters only, 2 to 40 characters.';
     const a=Number(p.age);
     if(!p.age||!Number.isInteger(a)||a<1||a>120)e['age-'+i]='Enter an age between 1 and 120.';
     if(!p.gender)e['gender-'+i]='Select a gender.';
@@ -1029,9 +1131,13 @@ function finalize(){
     base:q.base,fee:q.fee,total:q.total,createdAt:Date.now(),user:state.user.email
   };
   state.bookings.push(b);saveBookings();
+  const sv=saveCheckedPassengers();
   state.booking=b;state.sel=[];state.hold=null;state.pax=[];state.pending=false;state.payErr='';
   state.trip=null;state.noSeat=false; /* Back from the ticket must not reopen payment and double-book */
   go('ticket');
+  const n=sv.added+sv.updated;
+  if(n)toast(sv.added&&!sv.updated?`Saved ${sv.added} passenger${sv.added>1?'s':''} to your account.`:`Updated your saved passengers.`);
+  else if(sv.full)toast(`Your saved passengers list is full (${SAVED_MAX}). Remove one to add another.`);
 }
 
 /* ---------- events ---------- */
@@ -1061,6 +1167,16 @@ document.addEventListener('click',e=>{
     case'pay':pay();break;
     case'refresh-status':finalize();break;
     case'trips':state.cancelId=null;go('trips');break;
+    case'saved-open':state.errors={};state.savedEdit=null;state.savedDel=null;state.spForm=blankSp();go('saved');break;
+    case'saved-edit':{const x=savedList().find(y=>y.id===d.id);if(x){state.savedEdit=x.id;state.savedDel=null;state.errors={};state.spForm={name:x.name,age:String(x.age),gender:x.gender};render();const n=$('#sp-name');if(n)n.focus()}break}
+    case'saved-cancel':state.savedEdit=null;state.spForm=blankSp();state.errors={};render();break;
+    case'saved-del':state.savedDel=d.id;render();break;
+    case'saved-del-keep':state.savedDel=null;render();break;
+    case'saved-del-do':{
+      const x=savedList().find(y=>y.id===d.id);
+      writeSaved(savedList().filter(y=>y.id!==d.id));
+      if(state.savedEdit===d.id){state.savedEdit=null;state.spForm=blankSp()}
+      state.savedDel=null;if(x)toast(`Removed ${x.name}.`);render();break}
     case'trips-tab':state.tripsTab=d.k;state.cancelId=null;render();break;
     case'cancel-ask':state.cancelId=d.id;render();break;
     case'cancel-keep':state.cancelId=null;render();break;
@@ -1086,6 +1202,7 @@ document.addEventListener('click',e=>{
 document.addEventListener('submit',e=>{
   if(e.target.id==='sform'){e.preventDefault();doSearch()}
   else if(e.target.id==='lform'){e.preventDefault();submitLogin()}
+  else if(e.target.id==='spform'){e.preventDefault();savedSubmit()}
 });
 function onField(e){onFieldInner(e);persist()}
 function onFieldInner(e){
@@ -1102,6 +1219,9 @@ function onFieldInner(e){
   }
   if(d.s){const s=state.search;s[d.s]=d.s==='pax'?Number(el.value):el.value;return}
   if(d.p){const p=state.pax[Number(d.i)];if(p)p[d.p]=el.value;return}
+  if(d.saved!==undefined){if(e.type==='change')fillFromSaved(Number(d.saved),el.value);return}
+  if(d.save!==undefined){const p=state.pax[Number(d.save)];if(p)p.save=el.checked;return}
+  if(d.sp){state.spForm[d.sp]=el.value;return}
   if(d.c){state.contact[d.c]=el.value;return}
   if(d.pref){state.pref=el.value;return}
   if(d.pay){if(d.pay==='method')state.payMethod=el.value;else{state.payOutcome=el.value;state.payErr=''}return}
