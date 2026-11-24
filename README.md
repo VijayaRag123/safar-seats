@@ -34,5 +34,6 @@ so results do not change from day to day.
 | `my-trips.spec.js` | My trips menu, cancellation and refund, berth released after cancelling |
 | `departed-trains.spec.js` | Trains that have already left are hidden when searching today |
 | `mobile-berth-map.spec.js` | Seat map fits 375px and 360px screens, readable text, compact fare bar |
+| `saved-passengers.spec.js` | Save passengers while booking, reuse them, manage them on `#/saved`, per-account list, 20 limit |
 | `auth-ui.spec.js` | Show/hide password button, no Agent login, trains only |
 | `register.spec.js`, `testcase05.spec.js` | Registration and login |
