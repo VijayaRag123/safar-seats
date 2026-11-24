@@ -199,6 +199,26 @@ h1{font-size:clamp(30px,4.6vw,46px);line-height:1.08;letter-spacing:-.025em}
   background-image:linear-gradient(to top right,transparent calc(50% - 1px),var(--muted) 50%,transparent calc(50% + 1px)),linear-gradient(to bottom right,transparent calc(50% - 1px),var(--muted) 50%,transparent calc(50% + 1px));opacity:.75}
 .berthbtn:disabled .pil{opacity:0}
 .sw.a{border-color:var(--ok)}
+.pr.tier{display:none}
+/* phones: keep the berth map inside a 375px screen and use readable text.
+   Side berths wrap onto their own line, and the per-berth fare (same for the whole class) moves to the coach heading. */
+@media (max-width:480px){
+  .panel{padding:14px}
+  .deck{padding:8px 10px 12px}
+  .deck-head{flex-wrap:wrap;gap:2px 12px}
+  .brow{flex-wrap:wrap;gap:6px 8px}
+  .bhead .grp.side{display:none}
+  .grp.side{flex-basis:100%;margin:0 0 0 24px;padding:6px 0 0;border-left:0;border-top:1.5px dashed var(--line)}
+  .pr{font-size:11px}
+  .pr.fare{display:none}
+  .pr.tier{display:block}
+  .berthbtn{font-size:12px}
+  .brow .bay-no{font-size:11px}
+  .seat{font-size:12px}
+  .seat.berth{width:40px}
+  .seat.berth small{font-size:11px}
+  .chairs .srow{gap:4px}
+}
 
 /* passengers + payment */
 .pax{border:1px solid var(--line);border-radius:10px;padding:12px 14px 14px;margin:0 0 12px}
@@ -246,7 +266,7 @@ th{font:600 11px var(--font-body);letter-spacing:.06em;text-transform:uppercase;
 .vi input{width:18px;height:18px;margin-top:2px;flex:none;accent-color:var(--train)}
 .signin{background:var(--bus);color:var(--on-bus);border:0;border-radius:10px;padding:14px;font:700 15px var(--font-body);letter-spacing:.07em;text-transform:uppercase;cursor:pointer}
 .signin:hover{filter:brightness(1.06)}
-.lfoot{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px 14px 14px;border-top:1px solid var(--line)}
+.lfoot{display:grid;grid-template-columns:1fr;gap:10px;padding:10px 14px 14px;border-top:1px solid var(--line)}
 .lfoot button{background:var(--train);color:var(--on-train);border:0;border-radius:6px;padding:13px 8px;font:700 13px var(--font-body);letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
 .lfoot button:hover{filter:brightness(1.08)}
 .loginbox .demo{padding:0 26px 18px;border:0}
@@ -294,7 +314,9 @@ th{font:600 11px var(--font-body);letter-spacing:.06em;text-transform:uppercase;
 @media (max-width:860px){
   .intro{grid-template-columns:minmax(0,1fr);gap:22px}
   .seatgrid{display:block}
-  .summary{position:sticky;bottom:env(safe-area-inset-bottom,0px);top:auto;margin-top:14px;box-shadow:0 -6px 20px rgba(0,0,0,.12);z-index:5}
+  .summary{position:sticky;bottom:env(safe-area-inset-bottom,0px);top:auto;margin-top:14px;box-shadow:0 -6px 20px rgba(0,0,0,.12);z-index:5;gap:8px;padding:12px 14px}
+  /* compact bar on phones so it does not hide the seat map: keep chosen seats, hold timer, total and the action button */
+  .summary>div:first-child,.summary .line:not(.total){display:none}
   .trip{grid-template-columns:minmax(0,1fr)}
   .buy{align-items:flex-start}
   .grid3{grid-template-columns:minmax(0,1fr)}
@@ -474,7 +496,7 @@ const state={
   pax:[],contact:{mobile:'',email:''},board:0,drop:2,errors:{},
   payMethod:'upi',payOutcome:'success',payErr:'',pending:false,
   user:store.get('safar_user'),bookings:store.get('safar_bookings')||[],
-  tripsTab:'upcoming',cancelId:null,booking:null,
+  tripsTab:'upcoming',cancelId:null,booking:null,rs:null,allDeparted:false,
   modal:null,afterLogin:null,reg:newReg(),cap:'',otpSent:false
 };
 const saveBookings=()=>store.set('safar_bookings',state.bookings);
@@ -642,16 +664,16 @@ function trainMap(t){
   let map='';
   if(lay.kind==='berth'){
     const fareTxt=inr(ci.fare);
-    const cell=(n,tt)=>{
+    const cell=(n,tt,side)=>{
       const id=`${coach}-${n}`,booked=base.has(id)||m.has(id),on=sel.has(id);
-      return `<div class="bcell"><button type="button" class="berthbtn${on?' sel':''}" data-act="seat" data-id="${id}" data-label="${coach}/${n} ${tt}" data-ladies="0" data-testid="seat-${id}" aria-pressed="${on}" aria-label="Berth ${coach}/${n}, ${TIERS[tt]}${booked?', sold':''}"${booked?' disabled':''}><span class="bn">${n}</span><i class="pil"></i></button><span class="pr">${booked?'Sold':fareTxt}</span></div>`;
+      return `<div class="bcell"><button type="button" class="berthbtn${on?' sel':''}" data-act="seat" data-id="${id}" data-label="${coach}/${n} ${tt}" data-ladies="0" data-testid="seat-${id}" aria-pressed="${on}" aria-label="Berth ${coach}/${n}, ${TIERS[tt]}${booked?', sold':''}"${booked?' disabled':''}><span class="bn">${n}</span><i class="pil"></i></button><span class="pr ${booked?'sold':'fare'}">${booked?'Sold':fareTxt}</span>${side?`<span class="pr tier">${tt}</span>`:''}</div>`;
     };
     const tiers=lay.bays[0].main[0].map(x=>x.t);
     const hcell=x=>`<div class="bcell"><span class="pr">${x}</span></div>`;
     const hasSide=lay.bays[0].side.length>0;
     const head=`<div class="brow bhead" aria-hidden="true"><span class="bay-no"></span><div class="grp">${tiers.map(hcell).join('')}</div><div class="grp">${tiers.map(hcell).join('')}</div>${hasSide?`<div class="grp side">${['SL','SU'].map(hcell).join('')}</div>`:''}</div>`;
-    const rows=lay.bays.map(b=>`<div class="brow"><span class="bay-no">${b.b}</span><div class="grp">${b.main[0].map(x=>cell(x.n,x.t)).join('')}</div><div class="grp">${b.main[1].map(x=>cell(x.n,x.t)).join('')}</div>${b.side.length?`<div class="grp side">${b.side.map(x=>cell(x.n,x.t)).join('')}</div>`:''}</div>`).join('');
-    map=`<div class="decks"><div class="deck"><div class="deck-head"><span>Coach ${coach} · ${CLSNAME[ci.cls]}</span></div>${head}${rows}</div></div>`;
+    const rows=lay.bays.map(b=>`<div class="brow"><span class="bay-no">${b.b}</span><div class="grp">${b.main[0].map(x=>cell(x.n,x.t)).join('')}</div><div class="grp">${b.main[1].map(x=>cell(x.n,x.t)).join('')}</div>${b.side.length?`<div class="grp side">${b.side.map(x=>cell(x.n,x.t,true)).join('')}</div>`:''}</div>`).join('');
+    map=`<div class="decks"><div class="deck"><div class="deck-head"><span>Coach ${coach} · ${CLSNAME[ci.cls]}</span><span class="mono">${fareTxt} per berth</span></div>${head}${rows}</div></div>`;
   }else{
     map=`<div class="chairs">${lay.rows.map(r=>`<div class="srow"><div class="pair">${r.left.map(x=>btn(x.n,x.t)).join('')}</div><div class="aisle"></div><div class="pair">${r.right.map(x=>btn(x.n,x.t)).join('')}</div></div>`).join('')}</div>`;
   }
@@ -787,14 +809,13 @@ function newCaptchaCode(){
 function renderModal(){
   const m=state.modal,el=$('#modal');
   if(!m){el.innerHTML='';return}
-  const agent=m==='agent';
   state.otpSent=false;newCaptchaCode();
   el.innerHTML=`<div class="overlay" data-overlay="1"><form class="modal loginbox" id="lform" role="dialog" aria-modal="true" aria-labelledby="mt" novalidate data-testid="login-modal">
     <button type="button" class="lclose" data-act="modal-close" aria-label="Close" data-testid="login-close">✕</button>
     <div class="lbody">
-      <h2 class="ltitle" id="mt"><span>${agent?'AGENT LOGIN':'LOGIN'}</span></h2>
+      <h2 class="ltitle" id="mt"><span>LOGIN</span></h2>
       <div class="lf"><input id="l-user" data-testid="login-username" placeholder="Enter User Name" aria-label="User Name" autocomplete="username"></div>
-      <div class="lf"><input id="l-pass" data-testid="login-password" type="password" placeholder="Enter Password" aria-label="Password" autocomplete="current-password"><button type="button" class="eye" data-act="eye" data-for="l-pass" aria-label="Show password" aria-pressed="false" data-testid="login-eye">${EYE}</button></div>
+      <div class="lf"><input id="l-pass" data-testid="login-password" type="password" placeholder="Enter Password" aria-label="Password" autocomplete="current-password"><button type="button" class="eye" data-act="eye" data-for="l-pass" data-name="password" aria-label="Show password" data-testid="login-eye">${EYE}</button></div>
       <button type="button" class="forgot" data-act="forgot" data-testid="forgot-link">Forgot account details?</button>
       <label class="vi"><input type="checkbox" id="l-vi" data-vi="1" data-testid="login-otp-option"><span>Visually impaired users may select this option to receive OTP instead of CAPTCHA</span></label>
       <div id="capbox" class="capwrap"><div class="capline"><span class="capcode" id="capcode" data-testid="captcha-code" aria-label="Captcha code">${state.cap}</span><button type="button" class="eye" data-act="cap-refresh" aria-label="New captcha" data-testid="captcha-refresh">↻</button></div><div class="lf"><input id="l-cap" data-testid="login-captcha" placeholder="Enter Captcha" aria-label="Captcha" autocomplete="off" maxlength="5"></div></div>
@@ -802,7 +823,7 @@ function renderModal(){
       <p class="err" id="l-err" role="alert" data-testid="login-error"></p>
       <button class="signin" type="submit" data-testid="login-submit">Sign in</button>
     </div>
-    <div class="lfoot"><button type="button" data-act="register-open" data-testid="login-register">Register</button><button type="button" data-act="${agent?'login-open':'agent-open'}" data-testid="agent-login">${agent?'User login':'Agent login'}</button></div>
+    <div class="lfoot"><button type="button" data-act="register-open" data-testid="login-register">Register</button></div>
     <p class="demo">Demo account: user name <b class="mono">safardemo</b>, password <b class="mono">Safar@Train47</b>. Accounts you register are saved only in this browser.</p>
   </form></div>`;
   $('#l-user').focus();
@@ -820,7 +841,7 @@ async function submitLogin(){
   }
   const a=accounts().find(x=>x.username.toLowerCase()===u.toLowerCase()||x.email.toLowerCase()===u.toLowerCase());
   if(!a||a.hash!==await hashPw(pw)){newCaptchaCode();return err('Invalid user name or password.')}
-  state.user={username:a.username,name:a.name,email:a.email,role:state.modal==='agent'?'agent':'user'};
+  state.user={username:a.username,name:a.name,email:a.email};
   store.set('safar_user',state.user);
   state.modal=null;renderModal();
   toast(`Signed in as ${a.username}`);
@@ -853,7 +874,7 @@ function register(){
   const bad=k=>e[k]?` aria-invalid="true" aria-describedby="re-${k}"`:'';
   const msg=k=>e[k]?`<span class="err" id="re-${k}" data-testid="err-${k}">${esc(e[k])}</span>`:'';
   const txt=(k,label,ph,type,ac)=>`<div class="rfwrap"><div class="rf"><label for="r-${k}">${label}</label><input id="r-${k}" data-testid="reg-${k}" data-r="${k}" type="${type||'text'}" placeholder="${ph}" value="${esc(r[k])}" autocomplete="${ac||'off'}"${bad(k)}${ro}></div>${msg(k)}</div>`;
-  const pw=(k,label,ph)=>`<div class="rfwrap"><div class="rf pw"><label for="r-${k}">${label}</label><input id="r-${k}" data-testid="reg-${k}" data-r="${k}" type="password" placeholder="${ph}" value="${esc(r[k])}" autocomplete="new-password"${bad(k)}${ro}><button type="button" class="eye" data-act="eye" data-for="r-${k}" aria-label="Show ${label}" aria-pressed="false" data-testid="reg-eye-${k}">${EYEOFF}</button></div>${msg(k)}</div>`;
+  const pw=(k,label,ph)=>`<div class="rfwrap"><div class="rf pw"><label for="r-${k}">${label}</label><input id="r-${k}" data-testid="reg-${k}" data-r="${k}" type="password" placeholder="${ph}" value="${esc(r[k])}" autocomplete="new-password"${bad(k)}${ro}><button type="button" class="eye" data-act="eye" data-for="r-${k}" data-name="${esc(label.toLowerCase())}" aria-label="Show ${esc(label.toLowerCase())}" data-testid="reg-eye-${k}">${EYE}</button></div>${msg(k)}</div>`;
   const faq=r.faq?`<ul class="faq" data-testid="faq">
     <li>Your user name must be unique. It is what you type on the Log in screen.</li>
     <li>Enter your name exactly as on your government ID. It must match the ID you carry while travelling.</li>
@@ -923,8 +944,72 @@ function render(){
   $('#nav').innerHTML=navHtml();
   $('#app').innerHTML=VIEWS[state.view]();
   if(keep){const n=document.querySelector(`[data-id="${CSS.escape(keep)}"]`);if(n)n.focus({preventScroll:true})}
+  document.title=state.view==='home'?'Safar Seats':`${TITLES[state.view]} · Safar Seats`;
+  persist();
 }
-function go(v){state.view=v;render();window.scrollTo(0,0)}
+
+/* ---------- routing (#/results, #/seats ...) and reload persistence ---------- */
+const TITLES={home:'Home',results:'Train results',seats:'Choose seats',passengers:'Passenger details',payment:'Payment',ticket:'Your ticket',trips:'My trips',register:'Register'};
+const hashOf=v=>v==='home'?'#/':'#/'+v;
+const viewOfHash=()=>location.hash.replace(/^#\/?/,'')||'home';
+const sess={
+  get(k){try{const v=sessionStorage.getItem(k);return v?JSON.parse(v):null}catch(e){return null}},
+  set(k,v){try{sessionStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+/* A step is only reachable when the earlier steps' data exists. Otherwise fall back to the nearest valid step,
+   so Back/Forward, a typed URL or a reload can never land on a half-empty screen. */
+function resolveView(v){
+  if(!VIEWS[v])return 'home';
+  const t=state.trip,has=state.sel.length>0||state.noSeat;
+  if(v==='ticket')return state.booking?v:'home';
+  if(v==='payment'){
+    if(t&&has&&state.user&&state.pax.length===paxCount()&&!Object.keys(validate()).length)return v;
+    v='passengers';
+  }
+  if(v==='passengers'){if(t&&has)return v;v='seats'}
+  if(v==='seats'){if(t&&!state.noSeat)return v;v='results'}
+  if(v==='results')return state.rs?v:'home';
+  return v;
+}
+function go(v,opt){
+  v=resolveView(v);state.view=v;
+  const h=hashOf(v);
+  if((location.hash||'#/')!==h){try{history[opt&&opt.replace?'replaceState':'pushState'](null,'',h)}catch(e){}}
+  render();window.scrollTo(0,0);
+}
+window.addEventListener('popstate',()=>{
+  if(state.modal){state.modal=null;state.afterLogin=null;renderModal()}
+  const v=resolveView(viewOfHash());
+  state.view=v;
+  if((location.hash||'#/')!==hashOf(v)){try{history.replaceState(null,'',hashOf(v))}catch(e){}}
+  render();window.scrollTo(0,0);
+});
+/* booking-in-progress lives in sessionStorage (per tab). Passwords and the register form are never stored. */
+function persist(){
+  sess.set('safar_flow',{mode:state.mode,search:state.search,rs:state.rs,filter:state.filter,tripsTab:state.tripsTab,
+    tripKey:state.trip?state.trip.key:null,cls:state.cls,coach:state.coach,sel:state.sel,hold:state.hold,noSeat:state.noSeat,
+    waitStatus:state.waitStatus,pref:state.pref,pax:state.pax,contact:state.contact,board:state.board,drop:state.drop,
+    payMethod:state.payMethod,payOutcome:state.payOutcome,pending:state.pending,bookingId:state.booking?state.booking.id:null});
+}
+function restore(){
+  const d=sess.get('safar_flow');if(!d)return;
+  state.mode=d.mode||state.mode;state.filter=d.filter||state.filter;state.tripsTab=d.tripsTab||'upcoming';
+  if(d.search)Object.assign(state.search,d.search);
+  if(!state.search.date||state.search.date<todayStr())state.search.date=addDays(1);
+  if(d.contact)state.contact=d.contact;
+  if(d.rs&&d.rs.date>=todayStr()){state.rs=d.rs;buildResults()}
+  if(d.tripKey&&state.rs){
+    const t=state.results.find(x=>x.key===d.tripKey)||genAll(state.rs).find(x=>x.key===d.tripKey);
+    if(t){
+      Object.assign(state,{trip:t,cls:d.cls||null,coach:d.coach||0,noSeat:!!d.noSeat,waitStatus:d.waitStatus||'',pref:d.pref||'Any',
+        board:d.board||0,drop:d.drop==null?2:d.drop,payMethod:d.payMethod||'upi',payOutcome:d.payOutcome||'success',pending:!!d.pending});
+      /* the 10-minute hold keeps counting while the page is reloaded; once it has run out the seats are released */
+      if(d.hold&&d.hold.key===t.key&&d.hold.exp>Date.now()){state.sel=d.sel||[];state.hold=d.hold;state.pax=d.pax||[]}
+      else if(d.noSeat)state.pax=d.pax||[];
+    }
+  }
+  if(d.bookingId)state.booking=state.bookings.find(b=>b.id===d.bookingId)||null;
+}
 let tt;
 function toast(m){const el=$('#toast');el.textContent=m;el.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('on'),3500)}
 
@@ -940,13 +1025,18 @@ function doSearch(){
   state.searchErr=e;
   if(e){render();return}
   s.from=f;s.to=t;
-  const all=state.mode==='bus'?genBuses(f,t,s.date):genTrains(f,t,s.date);
-  /* hide trips that have already departed (only matters when searching today) */
-  const now=Date.now();
-  state.results=all.filter(x=>depTs(x.date,x.dep)>now);
-  state.allDeparted=all.length>0&&state.results.length===0;
+  state.rs={from:f,to:t,date:s.date};
+  buildResults();
   state.filter={type:'all',sort:'dep'};
   go('results');
+}
+const genAll=rs=>state.mode==='bus'?genBuses(rs.from,rs.to,rs.date):genTrains(rs.from,rs.to,rs.date);
+/* results come from the searched route (state.rs), not the form fields, so editing the form never changes an open trip */
+function buildResults(){
+  const all=genAll(state.rs),now=Date.now();
+  /* hide trips that have already departed (only matters when searching today) */
+  state.results=all.filter(x=>depTs(x.date,x.dep)>now);
+  state.allDeparted=all.length>0&&state.results.length===0;
 }
 function openTrip(t,cls){
   Object.assign(state,{trip:t,cls:cls||null,coach:0,sel:[],hold:null,pax:[],errors:{},board:0,drop:2,noSeat:false,waitStatus:'',payErr:'',pending:false,pref:'Any'});
@@ -1031,6 +1121,7 @@ function finalize(){
   };
   state.bookings.push(b);saveBookings();
   state.booking=b;state.sel=[];state.hold=null;state.pax=[];state.pending=false;state.payErr='';
+  state.trip=null;state.noSeat=false; /* Back from the ticket must not reopen payment and double-book */
   go('ticket');
 }
 
@@ -1041,7 +1132,7 @@ document.addEventListener('click',e=>{
   const a=el.dataset.act,d=el.dataset;
   switch(a){
     case'home':state.view='home';go('home');break;
-    case'mode':state.mode=d.mode;state.searchErr='';if(state.view!=='home'){state.results=[];}go('home');break;
+    case'mode':state.mode=d.mode;state.searchErr='';if(state.view!=='home'){state.results=[];state.rs=null;}go('home');break;
     case'swap':{const s=state.search;[s.from,s.to]=[s.to,s.from];render();break}
     case'route':state.search.from=d.from;state.search.to=d.to;state.searchErr='';render();break;
     case'modify':go('home');break;
@@ -1072,9 +1163,9 @@ document.addEventListener('click',e=>{
       if(b){const r=refundInfo(b);b.status='CANCELLED';b.refund=r.amount;saveBookings();toast(`Booking cancelled. Refund of ${inr(r.amount)} initiated.`)}
       state.cancelId=null;state.tripsTab='cancelled';render();break}
     case'login-open':state.modal='login';renderModal();break;
-    case'agent-open':state.modal='agent';renderModal();break;
     case'register-open':state.modal=null;renderModal();state.reg=newReg();go('register');break;
-    case'eye':{const i=document.getElementById(d.for);if(i){const show=i.type==='password';i.type=show?'text':'password';el.setAttribute('aria-pressed',String(show));el.innerHTML=show?EYE:EYEOFF;if(d.for==='l-pass')el.innerHTML=show?EYEOFF:EYE;el.setAttribute('aria-label',(show?'Hide ':'Show ')+(d.for==='l-pass'?'password':'password'))}break}
+    /* one convention for login and register: eye = "click to show", eye-off = "click to hide"; the label names the field it controls */
+    case'eye':{const i=document.getElementById(d.for);if(i){const show=i.type==='password';i.type=show?'text':'password';el.innerHTML=show?EYEOFF:EYE;el.setAttribute('aria-label',(show?'Hide ':'Show ')+d.name)}break}
     case'cap-refresh':newCaptchaCode();break;
     case'forgot':toast('Account recovery is not available in this demo. Use the demo account or register a new one.');break;
     case'send-otp':{const u=$('#l-user').value.trim();if(!u){$('#l-err').textContent='Enter your user name first.';break}state.otpSent=true;$('#l-err').textContent='';toast(`Demo OTP: ${DEMO_OTP}. No SMS is sent in this demo.`);break}
@@ -1083,14 +1174,15 @@ document.addEventListener('click',e=>{
     case'reg-edit':state.reg.otpStage=false;state.reg.err={};render();break;
     case'reg-faq':state.reg.faq=!state.reg.faq;render();break;
     case'modal-close':state.modal=null;state.afterLogin=null;renderModal();break;
-    case'logout':state.user=null;store.del('safar_user');state.contact.email='';toast('Logged out.');if(state.view==='payment')state.view='passengers';render();break;
+    case'logout':state.user=null;store.del('safar_user');state.contact.email='';toast('Logged out.');if(state.view==='payment')go('passengers',{replace:true});else render();break;
   }
 });
 document.addEventListener('submit',e=>{
   if(e.target.id==='sform'){e.preventDefault();doSearch()}
   else if(e.target.id==='lform'){e.preventDefault();submitLogin()}
 });
-function onField(e){
+function onField(e){onFieldInner(e);persist()}
+function onFieldInner(e){
   const el=e.target,d=el.dataset;if(!d)return;
   if(d.vi){const on=el.checked;$('#capbox').hidden=on;$('#otpbox').hidden=!on;$('#l-err').textContent='';return}
   if(d.r){
@@ -1121,7 +1213,7 @@ setInterval(()=>{
   if(left<=0){
     state.sel=[];state.hold=null;state.pax=[];state.pending=false;
     toast('Seat hold expired. Your seats were released.');
-    if(['seats','passengers','payment'].includes(state.view)){state.view='seats';render()}
+    if(['seats','passengers','payment'].includes(state.view))go('seats',{replace:true});
     return;
   }
   const el=$('#holdclock');if(el)el.textContent=mmss(left);
@@ -1129,6 +1221,10 @@ setInterval(()=>{
 
 ensureDemo();
 $('#cities').innerHTML=CITIES.map(c=>`<option value="${c}"></option>`).join('');
+restore();
+state.view=resolveView(viewOfHash());
+try{if((location.hash||'#/')!==hashOf(state.view))history.replaceState(null,'',hashOf(state.view))}catch(e){}
+window.addEventListener('pagehide',persist);
 render();
 })();
 </script>
