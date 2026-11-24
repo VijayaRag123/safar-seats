@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const appUrl = 'https://vijayarag123.github.io/safar-seats/';
+const appUrl = './';
 
 async function submitLogin(page, username, password) {
   const captcha = (await page.locator('[aria-label="Captcha code"]').innerText()).trim();
@@ -17,7 +17,9 @@ test('TC05-01: valid login lands on the intended page', async ({ page }) => {
 
   await submitLogin(page, 'safardemo', 'Safar@Train47');
 
-  await expect(page).toHaveURL(appUrl);
+  // Lands on the home page (a bare URL or #/), not on another step.
+  await expect(page).toHaveURL(/\/(#\/)?$/);
+  await expect(page.getByRole('heading', { name: /Happy Booking/ })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Log out' })).toBeVisible();
   await expect(page.getByText('Demo Traveller')).toBeVisible();
   await expect(page.getByRole('status')).toContainText('Signed in as safardemo');
