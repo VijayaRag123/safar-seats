@@ -1,0 +1,47 @@
+{
+  "available": {
+    "status": "AVAILABLE",
+    "count": 42,
+    "fare": 720,
+    "bookable": true
+  },
+  "rac": {
+    "status": "RAC",
+    "count": 8,
+    "fare": 680,
+    "bookable": true
+  },
+  "waitlist": {
+    "status": "WL",
+    "count": 12,
+    "fare": 640,
+    "bookable": true
+  },
+  "regret": {
+    "status": "Regret",
+    "count": 0,
+    "fare": 600,
+    "bookable": false
+  },
+  "noTrains": {
+    "trains": [],
+    "message": "No trains found for this search."
+  },
+  "soldOut": {
+    "trains": [
+      {
+        "name": "Sold Out Express",
+        "number": "99999",
+        "classes": [
+          {
+            "class": "SL",
+            "fare": 550,
+            "status": "Regret",
+            "count": 0,
+            "bookable": false
+          }
+        ]
+      }
+    ]
+  }
+}
