@@ -37,3 +37,10 @@ so results do not change from day to day.
 | `saved-passengers.spec.js` | Save passengers while booking, reuse them, manage them on `#/saved`, per-account list, 20 limit |
 | `auth-ui.spec.js` | Show/hide password button, no Agent login, trains only |
 | `register.spec.js`, `testcase05.spec.js` | Registration and login |
+
+## Test documentation and database test data
+
+| File | Purpose |
+| --- | --- |
+| `docs/test-scenarios.md` | Manual and automation test scenarios by module, tagged by type and priority (P0 to P2) |
+| `db/safar_test_data.sql` | Sample schema and records for database testing, with verification queries and negative inserts |
